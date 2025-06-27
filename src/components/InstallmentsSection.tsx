@@ -1,7 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CreditCard, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, CreditCard, AlertCircle, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Expense {
   id: number;
@@ -19,9 +21,12 @@ interface Expense {
 
 interface InstallmentsSectionProps {
   expenses: Expense[];
+  onDeleteExpense: (id: number) => void;
 }
 
-const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) => {
+const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onDeleteExpense }) => {
+  const { toast } = useToast();
+
   // Função para gerar todas as parcelas de uma compra
   const generateInstallmentSchedule = (expense: Expense) => {
     if (!expense.isInstallment || !expense.totalInstallments || !expense.originalAmount) {
@@ -41,14 +46,14 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
         installmentNumber: i + 1,
         amount: monthlyAmount,
         date: installmentDate.toISOString().split('T')[0],
-        isPaid: i + 1 <= (expense.installmentNumber || 0)
+        isPaid: i < (expense.installmentNumber || 0)
       });
     }
 
     return installments;
   };
 
-  // Obter todas as compras parceladas únicas
+  // Obter todas as compras parceladas (primeira parcela de cada compra)
   const installmentPurchases = expenses.filter(expense => 
     expense.isInstallment && expense.installmentNumber === 1
   );
@@ -56,7 +61,14 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
   // Gerar cronograma completo de todas as parcelas
   const allInstallments = installmentPurchases.flatMap(generateInstallmentSchedule);
 
-  // Agrupar parcelas por mês
+  // Calcular totais
+  const totalPendingAmount = allInstallments
+    .filter(inst => !inst.isPaid)
+    .reduce((sum, inst) => sum + inst.amount, 0);
+
+  const totalPendingInstallments = allInstallments.filter(inst => !inst.isPaid).length;
+
+  // Agrupar parcelas por mês para cronograma
   const installmentsByMonth = allInstallments.reduce((acc, installment) => {
     const monthKey = installment.date.substring(0, 7); // YYYY-MM
     if (!acc[monthKey]) {
@@ -66,15 +78,23 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
     return acc;
   }, {} as Record<string, any[]>);
 
-  // Ordenar meses
   const sortedMonths = Object.keys(installmentsByMonth).sort();
 
-  // Calcular totais
-  const totalPendingAmount = allInstallments
-    .filter(inst => !inst.isPaid)
-    .reduce((sum, inst) => sum + inst.amount, 0);
+  const handleDeletePurchase = (purchaseId: number, description: string) => {
+    // Deletar todas as parcelas desta compra
+    const relatedExpenses = expenses.filter(exp => 
+      exp.isInstallment && exp.description === description && exp.originalAmount
+    );
+    
+    relatedExpenses.forEach(expense => {
+      onDeleteExpense(expense.id);
+    });
 
-  const totalInstallments = allInstallments.filter(inst => !inst.isPaid).length;
+    toast({
+      title: "Compra parcelada excluída",
+      description: `${description} e todas suas parcelas foram removidas`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -92,7 +112,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-800">{totalInstallments}</div>
+            <div className="text-2xl font-bold text-blue-800">{totalPendingInstallments}</div>
             <div className="text-xs text-blue-600 mt-1">parcelas a pagar</div>
           </CardContent>
         </Card>
@@ -137,7 +157,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
                 return (
                   <div key={purchase.id} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-semibold text-lg">{purchase.description}</h3>
                         <p className="text-sm text-gray-600">
                           {purchase.category} • {purchase.paymentMethod}
@@ -146,13 +166,23 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
                           Compra realizada em: {new Date(purchase.date).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-blue-600">
-                          R$ {purchase.originalAmount?.toFixed(2)}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-blue-600">
+                            R$ {purchase.originalAmount?.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {purchase.totalInstallments}x de R$ {(purchase.originalAmount! / purchase.totalInstallments!).toFixed(2)}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {purchase.totalInstallments}x de R$ {(purchase.originalAmount! / purchase.totalInstallments!).toFixed(2)}
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeletePurchase(purchase.id, purchase.description)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                     
@@ -223,7 +253,8 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses }) =
                 const monthInstallments = installmentsByMonth[month];
                 const monthTotal = monthInstallments.reduce((sum, inst) => sum + inst.amount, 0);
                 const monthDate = new Date(month + '-01');
-                const isPastMonth = monthDate < new Date();
+                const currentDate = new Date();
+                const isPastMonth = monthDate < new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
                 const paidInstallments = monthInstallments.filter(inst => inst.isPaid);
                 const pendingInstallments = monthInstallments.filter(inst => !inst.isPaid);
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet, CreditCard } from 'lucide-react';
+import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet, CreditCard, Trash2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
 import GoalsSection from './GoalsSection';
@@ -120,6 +120,10 @@ const FinancialDashboard = () => {
     setExpenses([...expenses, { ...expense, id: Date.now() + Math.random() }]);
   };
 
+  const deleteExpense = (expenseId: number) => {
+    setExpenses(expenses.filter(expense => expense.id !== expenseId));
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'add':
@@ -140,7 +144,7 @@ const FinancialDashboard = () => {
           setIncomes={setIncomes}
         />;
       case 'installments':
-        return <InstallmentsSection expenses={expenses} />;
+        return <InstallmentsSection expenses={expenses} onDeleteExpense={deleteExpense} />;
       default:
         return (
           <div className="space-y-6">
@@ -167,7 +171,7 @@ const FinancialDashboard = () => {
                 <CardContent>
                   <div className="text-2xl font-bold text-red-800">R$ {totalExpenses.toFixed(2)}</div>
                   <div className="text-xs text-red-600 mt-1">
-                    {((totalExpenses / totalIncome) * 100).toFixed(1)}% da renda
+                    {totalIncome > 0 ? ((totalExpenses / totalIncome) * 100).toFixed(1) : '0'}% da renda
                   </div>
                 </CardContent>
               </Card>
@@ -204,44 +208,7 @@ const FinancialDashboard = () => {
               </Card>
             </div>
 
-            {/* Controle de Parcelas por Mês */}
-            {Object.keys(getInstallmentsByMonth()).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Parcelas por Mês
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Object.entries(getInstallmentsByMonth()).map(([month, monthExpenses]) => {
-                      const monthTotal = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-                      return (
-                        <div key={month} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium">
-                              {new Date(month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <span className="font-bold text-red-600">R$ {monthTotal.toFixed(2)}</span>
-                          </div>
-                          <div className="space-y-1">
-                            {monthExpenses.map(expense => (
-                              <div key={expense.id} className="text-sm text-gray-600 flex justify-between">
-                                <span>{expense.description} ({expense.installmentNumber}/{expense.totalInstallments})</span>
-                                <span>R$ {expense.amount.toFixed(2)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Últimas Despesas */}
+            {/* Últimas Despesas com opção de deletar */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -282,8 +249,18 @@ const FinancialDashboard = () => {
                           </div>
                         )}
                       </div>
-                      <div className="font-bold text-red-600 ml-4">
-                        -R$ {expense.amount.toFixed(2)}
+                      <div className="flex items-center gap-2">
+                        <div className="font-bold text-red-600">
+                          -R$ {expense.amount.toFixed(2)}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteExpense(expense.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
