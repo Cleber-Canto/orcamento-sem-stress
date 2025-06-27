@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign } from 'lucide-react';
@@ -9,21 +8,64 @@ import GoalsSection from './GoalsSection';
 import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
 
+interface Goal {
+  id: number;
+  name: string;
+  target: number;
+  current: number;
+  type: 'save' | 'limit';
+}
+
+interface Expense {
+  id: number;
+  category: string;
+  amount: number;
+  date: string;
+  description: string;
+}
+
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [expenses, setExpenses] = useState([
-    { id: 1, category: 'Alimentação', amount: 45.50, date: '2024-01-15', description: 'Almoço' },
-    { id: 2, category: 'Transporte', amount: 12.00, date: '2024-01-15', description: 'Uber' },
-    { id: 3, category: 'Mercado', amount: 120.00, date: '2024-01-14', description: 'Compras semanais' },
-  ]);
+  
+  // Carrega dados do localStorage ou usa valores padrão
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    const savedExpenses = localStorage.getItem('financial-expenses');
+    return savedExpenses ? JSON.parse(savedExpenses) : [
+      { id: 1, category: 'Alimentação', amount: 45.50, date: '2024-01-15', description: 'Almoço' },
+      { id: 2, category: 'Transporte', amount: 12.00, date: '2024-01-15', description: 'Uber' },
+      { id: 3, category: 'Mercado', amount: 120.00, date: '2024-01-14', description: 'Compras semanais' },
+    ];
+  });
 
-  const [goals, setGoals] = useState([
-    { id: 1, name: 'Emergência', target: 500, current: 150, type: 'save' },
-    { id: 2, name: 'Delivery', target: 300, current: 280, type: 'limit' },
-  ]);
+  const [goals, setGoals] = useState<Goal[]>(() => {
+    const savedGoals = localStorage.getItem('financial-goals');
+    return savedGoals ? JSON.parse(savedGoals) : [
+      { id: 1, name: 'Emergência', target: 500, current: 150, type: 'save' as const },
+      { id: 2, name: 'Delivery', target: 300, current: 280, type: 'limit' as const },
+    ];
+  });
+
+  const [monthlyIncome, setMonthlyIncome] = useState(() => {
+    const savedIncome = localStorage.getItem('financial-income');
+    return savedIncome ? JSON.parse(savedIncome) : 2500;
+  });
+
+  // Salva despesas no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem('financial-expenses', JSON.stringify(expenses));
+  }, [expenses]);
+
+  // Salva metas no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem('financial-goals', JSON.stringify(goals));
+  }, [goals]);
+
+  // Salva renda no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('financial-income', JSON.stringify(monthlyIncome));
+  }, [monthlyIncome]);
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const monthlyIncome = 2500; // Valor exemplo
   const remainingBalance = monthlyIncome - totalExpenses;
 
   const addExpense = (expense: any) => {
