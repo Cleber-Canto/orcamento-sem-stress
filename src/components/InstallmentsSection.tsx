@@ -32,29 +32,34 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   // Data de fechamento do cartão (dia 29 como padrão)
   const CARD_CLOSING_DAY = 29;
 
-  // Função para calcular a data da primeira parcela baseada na data de fechamento do cartão
+  // Função para calcular a data da primeira parcela baseada na data real da compra
   const calculateFirstInstallmentDate = (purchaseDate: string) => {
     const purchase = new Date(purchaseDate);
     const purchaseDay = purchase.getDate();
     
+    console.log('Data da compra:', purchase, 'Dia:', purchaseDay);
+    
     // Se a compra foi feita após o dia de fechamento, a primeira parcela será no próximo mês
-    // Se foi antes, será no mesmo mês
+    // Se foi antes ou no dia de fechamento, será no mesmo mês
     let firstInstallmentDate = new Date(purchase);
     
     if (purchaseDay > CARD_CLOSING_DAY) {
       // Compra após fechamento - primeira parcela no próximo mês
       firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
+      firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1); // Dia 30
+    } else {
+      // Compra antes do fechamento - primeira parcela no mesmo mês, dia 30
+      firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1); // Dia 30
     }
     
-    // Definir o dia da parcela como o próximo dia após o fechamento
-    firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1);
-    
-    // Se o dia não existir no mês (ex: 30 de fevereiro), ajustar para o último dia do mês
+    // Se o dia 30 não existir no mês (fevereiro), ajustar para o último dia do mês
     if (firstInstallmentDate.getDate() !== CARD_CLOSING_DAY + 1) {
       firstInstallmentDate.setDate(0); // Último dia do mês anterior
       firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
       firstInstallmentDate.setDate(1); // Primeiro dia do próximo mês
     }
+    
+    console.log('Primeira parcela será em:', firstInstallmentDate);
     
     return firstInstallmentDate;
   };
@@ -82,7 +87,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   const installmentGroups = groupInstallmentsByPurchase();
   const installmentPurchases = Object.values(installmentGroups);
 
-  // Gerar cronograma completo de todas as parcelas com data de fechamento do cartão
+  // Gerar cronograma completo de todas as parcelas seguindo mês a mês
   const generateAllInstallments = () => {
     const allInstallments: Array<Expense & { isPaid: boolean }> = [];
     
@@ -96,12 +101,20 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
       const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
       const monthlyAmount = originalAmount / totalInstallments;
       
-      // Calcular a data da primeira parcela baseada na data de fechamento do cartão
+      // Calcular a data da primeira parcela baseada na data real da compra
       const baseDate = calculateFirstInstallmentDate(firstInstallment.date);
       
       for (let i = 0; i < totalInstallments; i++) {
         const installmentDate = new Date(baseDate);
         installmentDate.setMonth(installmentDate.getMonth() + i);
+        
+        // Ajustar se o dia não existir no mês (ex: 30 de fevereiro)
+        if (installmentDate.getDate() !== baseDate.getDate()) {
+          // Se o dia original era 30 e estamos em fevereiro, usar o último dia do mês
+          installmentDate.setDate(0); // Vai para o último dia do mês anterior
+          installmentDate.setMonth(installmentDate.getMonth() + 1);
+          installmentDate.setDate(0); // Último dia do mês atual
+        }
         
         // Verificar se esta parcela já foi paga (existe na lista de despesas)
         const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
