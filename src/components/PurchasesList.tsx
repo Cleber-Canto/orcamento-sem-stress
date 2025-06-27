@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CreditCard, AlertCircle, Trash2 } from 'lucide-react';
 import { Expense } from '@/types/installments';
-import { calculateFirstInstallmentDate } from '@/utils/installmentUtils';
 
 interface PurchasesListProps {
   installmentPurchases: Expense[][];
@@ -46,8 +45,10 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
             const paidInstallments = purchaseGroup.length;
             const pendingInstallments = totalInstallments - paidInstallments;
             
-            // Calcular a data da primeira parcela baseada na data real da compra
-            const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+            // Calcular a data da primeira parcela: mês seguinte à compra
+            const purchaseDate = new Date(firstInstallment.date);
+            const firstInstallmentDate = new Date(purchaseDate);
+            firstInstallmentDate.setMonth(purchaseDate.getMonth() + 1);
             
             return (
               <div key={index} className="p-4 bg-gray-50 rounded-lg">
@@ -112,13 +113,19 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
                       const installmentNumber = paidInstallments + i + 1;
-                      const installmentDate = new Date(firstInstallmentDate);
-                      installmentDate.setMonth(installmentDate.getMonth() + installmentNumber - 1);
                       
-                      // Ajustar se o dia não existir no mês
-                      const targetMonth = (firstInstallmentDate.getMonth() + installmentNumber - 1) % 12;
-                      if (installmentDate.getMonth() !== targetMonth) {
-                        installmentDate.setMonth(targetMonth + 1, 0);
+                      // Calcular data da parcela: data da compra + número de meses
+                      const installmentDate = new Date(purchaseDate);
+                      installmentDate.setMonth(purchaseDate.getMonth() + installmentNumber);
+                      
+                      // Manter o mesmo dia da compra, ajustando se necessário
+                      const targetDay = purchaseDate.getDate();
+                      const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
+                      
+                      if (targetDay > lastDayOfMonth) {
+                        installmentDate.setDate(lastDayOfMonth);
+                      } else {
+                        installmentDate.setDate(targetDay);
                       }
                       
                       return (

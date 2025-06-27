@@ -1,20 +1,15 @@
 
 import { Expense, EnhancedInstallment } from '@/types/installments';
 
-// Função para calcular a data da primeira parcela baseada na data real da compra
+// Função para calcular a data da primeira parcela baseada na data da compra
 export const calculateFirstInstallmentDate = (purchaseDate: string) => {
   const purchase = new Date(purchaseDate);
   
   console.log('Data da compra original:', purchase);
   
-  // A primeira parcela será no próximo mês, mantendo o mesmo dia
+  // A primeira parcela será no mês seguinte, mantendo o mesmo dia
   const firstInstallmentDate = new Date(purchase);
   firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-  
-  // Se o dia não existir no próximo mês (ex: 31 para fevereiro), ajustar para o último dia
-  if (firstInstallmentDate.getMonth() !== (purchase.getMonth() + 1) % 12) {
-    firstInstallmentDate.setDate(0); // Último dia do mês anterior
-  }
   
   console.log('Primeira parcela calculada para:', firstInstallmentDate);
   
@@ -73,18 +68,23 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     console.log('Valor original:', originalAmount);
     console.log('Valor mensal:', monthlyAmount);
     
-    // Calcular a data da primeira parcela baseada na data real da compra
-    const baseDate = calculateFirstInstallmentDate(firstInstallment.date);
+    // Usar a data da compra como base
+    const purchaseDate = new Date(firstInstallment.date);
     
     for (let i = 0; i < totalInstallments; i++) {
-      const installmentDate = new Date(baseDate);
-      installmentDate.setMonth(installmentDate.getMonth() + i);
+      // Calcular a data de cada parcela: mês seguinte + i meses
+      const installmentDate = new Date(purchaseDate);
+      installmentDate.setMonth(purchaseDate.getMonth() + 1 + i);
       
-      // Ajustar se o dia não existir no mês
-      const targetMonth = (baseDate.getMonth() + i) % 12;
-      if (installmentDate.getMonth() !== targetMonth) {
-        // Se o dia não existe no mês, usar o último dia do mês
-        installmentDate.setMonth(targetMonth + 1, 0);
+      // Manter o mesmo dia do mês da compra
+      // Se o dia não existir no mês de destino, usar o último dia do mês
+      const targetDay = purchaseDate.getDate();
+      const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
+      
+      if (targetDay > lastDayOfMonth) {
+        installmentDate.setDate(lastDayOfMonth);
+      } else {
+        installmentDate.setDate(targetDay);
       }
       
       // Verificar se esta parcela já foi paga (existe na lista de despesas)
