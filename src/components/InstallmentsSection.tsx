@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +29,36 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   console.log('Todas as despesas:', expenses);
   console.log('Despesas com isInstallment:', expenses.filter(e => e.isInstallment));
 
+  // Data de fechamento do cartão (dia 29 como padrão)
+  const CARD_CLOSING_DAY = 29;
+
+  // Função para calcular a data da primeira parcela baseada na data de fechamento do cartão
+  const calculateFirstInstallmentDate = (purchaseDate: string) => {
+    const purchase = new Date(purchaseDate);
+    const purchaseDay = purchase.getDate();
+    
+    // Se a compra foi feita após o dia de fechamento, a primeira parcela será no próximo mês
+    // Se foi antes, será no mesmo mês
+    let firstInstallmentDate = new Date(purchase);
+    
+    if (purchaseDay > CARD_CLOSING_DAY) {
+      // Compra após fechamento - primeira parcela no próximo mês
+      firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
+    }
+    
+    // Definir o dia da parcela como o próximo dia após o fechamento
+    firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1);
+    
+    // Se o dia não existir no mês (ex: 30 de fevereiro), ajustar para o último dia do mês
+    if (firstInstallmentDate.getDate() !== CARD_CLOSING_DAY + 1) {
+      firstInstallmentDate.setDate(0); // Último dia do mês anterior
+      firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
+      firstInstallmentDate.setDate(1); // Primeiro dia do próximo mês
+    }
+    
+    return firstInstallmentDate;
+  };
+
   // Agrupar compras parceladas por descrição e valor original
   const groupInstallmentsByPurchase = () => {
     const installmentExpenses = expenses.filter(expense => expense.isInstallment);
@@ -53,7 +82,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   const installmentGroups = groupInstallmentsByPurchase();
   const installmentPurchases = Object.values(installmentGroups);
 
-  // Gerar cronograma completo de todas as parcelas
+  // Gerar cronograma completo de todas as parcelas com data de fechamento do cartão
   const generateAllInstallments = () => {
     const allInstallments: Array<Expense & { isPaid: boolean }> = [];
     
@@ -67,8 +96,8 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
       const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
       const monthlyAmount = originalAmount / totalInstallments;
       
-      // Usar a data da primeira parcela como base
-      const baseDate = new Date(firstInstallment.date);
+      // Calcular a data da primeira parcela baseada na data de fechamento do cartão
+      const baseDate = calculateFirstInstallmentDate(firstInstallment.date);
       
       for (let i = 0; i < totalInstallments; i++) {
         const installmentDate = new Date(baseDate);
@@ -137,6 +166,9 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Controle de Parcelas</h2>
+        <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
+          Cartão fecha dia {CARD_CLOSING_DAY}
+        </div>
       </div>
 
       {/* Resumo de Parcelas */}
@@ -195,6 +227,9 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                 const paidInstallments = purchaseGroup.length;
                 const pendingInstallments = totalInstallments - paidInstallments;
                 
+                // Calcular a data da primeira parcela baseada na data de fechamento
+                const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+                
                 return (
                   <div key={index} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
@@ -205,6 +240,9 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                         </p>
                         <p className="text-sm text-gray-600">
                           Compra realizada em: {new Date(firstInstallment.date).toLocaleDateString('pt-BR')}
+                        </p>
+                        <p className="text-sm text-blue-600">
+                          Primeira parcela: {firstInstallmentDate.toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -255,8 +293,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
                           const installmentNumber = paidInstallments + i + 1;
-                          const baseDate = new Date(firstInstallment.date);
-                          const installmentDate = new Date(baseDate);
+                          const installmentDate = new Date(firstInstallmentDate);
                           installmentDate.setMonth(installmentDate.getMonth() + installmentNumber - 1);
                           
                           return (
