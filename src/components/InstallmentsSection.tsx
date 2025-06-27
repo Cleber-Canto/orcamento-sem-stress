@@ -29,34 +29,19 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   console.log('Todas as despesas:', expenses);
   console.log('Despesas com isInstallment:', expenses.filter(e => e.isInstallment));
 
-  // Data de fechamento do cartão (dia 29 como padrão)
-  const CARD_CLOSING_DAY = 29;
-
   // Função para calcular a data da primeira parcela baseada na data real da compra
   const calculateFirstInstallmentDate = (purchaseDate: string) => {
     const purchase = new Date(purchaseDate);
-    const purchaseDay = purchase.getDate();
     
-    console.log('Data da compra:', purchase, 'Dia:', purchaseDay);
+    console.log('Data da compra:', purchase);
     
-    // Se a compra foi feita após o dia de fechamento, a primeira parcela será no próximo mês
-    // Se foi antes ou no dia de fechamento, será no mesmo mês
-    let firstInstallmentDate = new Date(purchase);
+    // A primeira parcela será no próximo mês, mantendo o mesmo dia
+    const firstInstallmentDate = new Date(purchase);
+    firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
     
-    if (purchaseDay > CARD_CLOSING_DAY) {
-      // Compra após fechamento - primeira parcela no próximo mês
-      firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-      firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1); // Dia 30
-    } else {
-      // Compra antes do fechamento - primeira parcela no mesmo mês, dia 30
-      firstInstallmentDate.setDate(CARD_CLOSING_DAY + 1); // Dia 30
-    }
-    
-    // Se o dia 30 não existir no mês (fevereiro), ajustar para o último dia do mês
-    if (firstInstallmentDate.getDate() !== CARD_CLOSING_DAY + 1) {
+    // Se o dia não existir no próximo mês (ex: 31 para fevereiro), ajustar para o último dia
+    if (firstInstallmentDate.getMonth() !== (purchase.getMonth() + 1) % 12) {
       firstInstallmentDate.setDate(0); // Último dia do mês anterior
-      firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-      firstInstallmentDate.setDate(1); // Primeiro dia do próximo mês
     }
     
     console.log('Primeira parcela será em:', firstInstallmentDate);
@@ -108,12 +93,11 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
         const installmentDate = new Date(baseDate);
         installmentDate.setMonth(installmentDate.getMonth() + i);
         
-        // Ajustar se o dia não existir no mês (ex: 30 de fevereiro)
-        if (installmentDate.getDate() !== baseDate.getDate()) {
-          // Se o dia original era 30 e estamos em fevereiro, usar o último dia do mês
-          installmentDate.setDate(0); // Vai para o último dia do mês anterior
-          installmentDate.setMonth(installmentDate.getMonth() + 1);
-          installmentDate.setDate(0); // Último dia do mês atual
+        // Ajustar se o dia não existir no mês
+        const targetMonth = (baseDate.getMonth() + i) % 12;
+        if (installmentDate.getMonth() !== targetMonth) {
+          // Se o dia não existe no mês, usar o último dia do mês
+          installmentDate.setMonth(targetMonth + 1, 0);
         }
         
         // Verificar se esta parcela já foi paga (existe na lista de despesas)
@@ -240,7 +224,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                 const paidInstallments = purchaseGroup.length;
                 const pendingInstallments = totalInstallments - paidInstallments;
                 
-                // Calcular a data da primeira parcela baseada na data de fechamento
+                // Calcular a data da primeira parcela baseada na data real da compra
                 const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
                 
                 return (
@@ -308,6 +292,12 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                           const installmentNumber = paidInstallments + i + 1;
                           const installmentDate = new Date(firstInstallmentDate);
                           installmentDate.setMonth(installmentDate.getMonth() + installmentNumber - 1);
+                          
+                          // Ajustar se o dia não existir no mês
+                          const targetMonth = (firstInstallmentDate.getMonth() + installmentNumber - 1) % 12;
+                          if (installmentDate.getMonth() !== targetMonth) {
+                            installmentDate.setMonth(targetMonth + 1, 0);
+                          }
                           
                           return (
                             <div key={i} className="text-xs p-2 bg-white rounded border">
