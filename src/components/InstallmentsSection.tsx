@@ -10,13 +10,16 @@ import InstallmentsCalendar from './InstallmentsCalendar';
 const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onDeleteExpense }) => {
   const { toast } = useToast();
 
-  console.log('Todas as despesas:', expenses);
-  console.log('Despesas com isInstallment:', expenses.filter(e => e.isInstallment));
+  console.log('Todas as despesas recebidas:', expenses);
+  console.log('Despesas com isInstallment true:', expenses.filter(e => e.isInstallment === true));
+  console.log('Despesas que possuem propriedade isInstallment:', expenses.filter(e => e.hasOwnProperty('isInstallment')));
 
   const installmentGroups = groupInstallmentsByPurchase(expenses);
   const installmentPurchases = Object.values(installmentGroups);
   const allInstallments = generateAllInstallments(installmentGroups);
 
+  console.log('Grupos de parcelas:', installmentGroups);
+  console.log('Compras parceladas:', installmentPurchases);
   console.log('Todas as parcelas geradas:', allInstallments);
 
   // Calcular totais
