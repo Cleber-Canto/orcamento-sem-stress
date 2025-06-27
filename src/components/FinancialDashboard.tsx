@@ -22,6 +22,14 @@ interface Expense {
   amount: number;
   date: string;
   description: string;
+  paymentMethod?: string;
+  isInstallment?: boolean;
+  installments?: number;
+  installmentNumber?: number;
+  totalInstallments?: number;
+  isRecurring?: boolean;
+  recurringFrequency?: string;
+  notes?: string;
 }
 
 const FinancialDashboard = () => {
@@ -31,9 +39,11 @@ const FinancialDashboard = () => {
   const [expenses, setExpenses] = useState<Expense[]>(() => {
     const savedExpenses = localStorage.getItem('financial-expenses');
     return savedExpenses ? JSON.parse(savedExpenses) : [
-      { id: 1, category: 'Alimentação', amount: 45.50, date: '2024-01-15', description: 'Almoço' },
-      { id: 2, category: 'Transporte', amount: 12.00, date: '2024-01-15', description: 'Uber' },
-      { id: 3, category: 'Mercado', amount: 120.00, date: '2024-01-14', description: 'Compras semanais' },
+      { id: 1, category: 'Alimentação', amount: 45.50, date: '2024-01-15', description: 'Almoço', paymentMethod: 'Cartão de Crédito' },
+      { id: 2, category: 'Transporte', amount: 12.00, date: '2024-01-15', description: 'Uber', paymentMethod: 'PIX' },
+      { id: 3, category: 'Mercado', amount: 120.00, date: '2024-01-14', description: 'Compras semanais', paymentMethod: 'Cartão de Débito' },
+      { id: 4, category: 'Débito Automático', amount: 89.90, date: '2024-01-10', description: 'Internet (1/12)', paymentMethod: 'Débito Automático', isInstallment: true, installmentNumber: 1, totalInstallments: 12 },
+      { id: 5, category: 'Impostos', amount: 250.00, date: '2024-01-05', description: 'IPTU', paymentMethod: 'Boleto' },
     ];
   });
 
@@ -69,7 +79,7 @@ const FinancialDashboard = () => {
   const remainingBalance = monthlyIncome - totalExpenses;
 
   const addExpense = (expense: any) => {
-    setExpenses([...expenses, { ...expense, id: Date.now() }]);
+    setExpenses([...expenses, { ...expense, id: Date.now() + Math.random() }]);
   };
 
   const renderTabContent = () => {
@@ -131,13 +141,40 @@ const FinancialDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {expenses.slice(-5).reverse().map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <div>
+                  {expenses.slice(-8).reverse().map((expense) => (
+                    <div key={expense.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
                         <div className="font-medium">{expense.description}</div>
-                        <div className="text-sm text-gray-600">{expense.category} • {new Date(expense.date).toLocaleDateString()}</div>
+                        <div className="text-sm text-gray-600 flex items-center gap-2">
+                          <span>{expense.category}</span>
+                          {expense.paymentMethod && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                {expense.paymentMethod === 'Cartão de Crédito' && '💳'}
+                                {expense.paymentMethod === 'Débito Automático' && '🔄'}
+                                {expense.paymentMethod === 'PIX' && '📱'}
+                                {expense.paymentMethod}
+                              </span>
+                            </>
+                          )}
+                          <span>•</span>
+                          <span>{new Date(expense.date).toLocaleDateString()}</span>
+                        </div>
+                        {expense.installmentNumber && expense.totalInstallments && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            Parcela {expense.installmentNumber}/{expense.totalInstallments}
+                          </div>
+                        )}
+                        {expense.notes && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {expense.notes}
+                          </div>
+                        )}
                       </div>
-                      <div className="font-bold text-red-600">-R$ {expense.amount.toFixed(2)}</div>
+                      <div className="font-bold text-red-600 ml-4">
+                        -R$ {expense.amount.toFixed(2)}
+                      </div>
                     </div>
                   ))}
                 </div>
