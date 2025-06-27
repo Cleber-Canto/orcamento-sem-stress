@@ -27,39 +27,71 @@ interface InstallmentsSectionProps {
 const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onDeleteExpense }) => {
   const { toast } = useToast();
 
-  // Função para gerar todas as parcelas de uma compra
-  const generateInstallmentSchedule = (expense: Expense) => {
-    if (!expense.isInstallment || !expense.totalInstallments || !expense.originalAmount) {
-      return [];
-    }
+  console.log('Todas as despesas:', expenses);
+  console.log('Despesas com isInstallment:', expenses.filter(e => e.isInstallment));
 
-    const installments = [];
-    const baseDate = new Date(expense.date);
-    const monthlyAmount = expense.originalAmount / expense.totalInstallments;
-
-    for (let i = 0; i < expense.totalInstallments; i++) {
-      const installmentDate = new Date(baseDate);
-      installmentDate.setMonth(installmentDate.getMonth() + i);
-      
-      installments.push({
-        ...expense,
-        installmentNumber: i + 1,
-        amount: monthlyAmount,
-        date: installmentDate.toISOString().split('T')[0],
-        isPaid: i < (expense.installmentNumber || 0)
-      });
-    }
-
-    return installments;
+  // Agrupar compras parceladas por descrição e valor original
+  const groupInstallmentsByPurchase = () => {
+    const installmentExpenses = expenses.filter(expense => expense.isInstallment);
+    console.log('Despesas parceladas filtradas:', installmentExpenses);
+    
+    const grouped: { [key: string]: Expense[] } = {};
+    
+    installmentExpenses.forEach(expense => {
+      // Criar chave única baseada na descrição e valor original
+      const key = `${expense.description}-${expense.originalAmount || expense.amount}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(expense);
+    });
+    
+    console.log('Compras agrupadas:', grouped);
+    return grouped;
   };
 
-  // Obter todas as compras parceladas (primeira parcela de cada compra)
-  const installmentPurchases = expenses.filter(expense => 
-    expense.isInstallment && expense.installmentNumber === 1
-  );
+  const installmentGroups = groupInstallmentsByPurchase();
+  const installmentPurchases = Object.values(installmentGroups);
 
   // Gerar cronograma completo de todas as parcelas
-  const allInstallments = installmentPurchases.flatMap(generateInstallmentSchedule);
+  const generateAllInstallments = () => {
+    const allInstallments: Array<Expense & { isPaid: boolean }> = [];
+    
+    Object.values(installmentGroups).forEach(group => {
+      if (group.length === 0) return;
+      
+      const firstInstallment = group[0];
+      const totalInstallments = firstInstallment.totalInstallments || group.length;
+      const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
+      const monthlyAmount = originalAmount / totalInstallments;
+      
+      // Pegar a data da primeira parcela
+      const baseDate = new Date(group.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0].date);
+      
+      for (let i = 0; i < totalInstallments; i++) {
+        const installmentDate = new Date(baseDate);
+        installmentDate.setMonth(installmentDate.getMonth() + i);
+        
+        // Verificar se esta parcela já foi paga (existe na lista de despesas)
+        const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
+        const isPaid = !!existingInstallment;
+        
+        allInstallments.push({
+          ...firstInstallment,
+          installmentNumber: i + 1,
+          amount: monthlyAmount,
+          date: installmentDate.toISOString().split('T')[0],
+          isPaid: isPaid,
+          id: existingInstallment?.id || firstInstallment.id + i
+        });
+      }
+    });
+    
+    return allInstallments;
+  };
+
+  const allInstallments = generateAllInstallments();
+  console.log('Todas as parcelas geradas:', allInstallments);
 
   // Calcular totais
   const totalPendingAmount = allInstallments
@@ -67,6 +99,13 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
     .reduce((sum, inst) => sum + inst.amount, 0);
 
   const totalPendingInstallments = allInstallments.filter(inst => !inst.isPaid).length;
+  const totalPurchases = installmentPurchases.length;
+
+  console.log('Totais calculados:', {
+    totalPendingAmount,
+    totalPendingInstallments,
+    totalPurchases
+  });
 
   // Agrupar parcelas por mês para cronograma
   const installmentsByMonth = allInstallments.reduce((acc, installment) => {
@@ -80,13 +119,9 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
 
   const sortedMonths = Object.keys(installmentsByMonth).sort();
 
-  const handleDeletePurchase = (purchaseId: number, description: string) => {
+  const handleDeletePurchase = (purchaseGroup: Expense[], description: string) => {
     // Deletar todas as parcelas desta compra
-    const relatedExpenses = expenses.filter(exp => 
-      exp.isInstallment && exp.description === description && exp.originalAmount
-    );
-    
-    relatedExpenses.forEach(expense => {
+    purchaseGroup.forEach(expense => {
       onDeleteExpense(expense.id);
     });
 
@@ -132,7 +167,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
             <CardTitle className="text-sm font-medium text-purple-700">Compras Parceladas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-800">{installmentPurchases.length}</div>
+            <div className="text-2xl font-bold text-purple-800">{totalPurchases}</div>
             <div className="text-xs text-purple-600 mt-1">ativas</div>
           </CardContent>
         </Card>
@@ -149,36 +184,39 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {installmentPurchases.map((purchase) => {
-                const installmentSchedule = generateInstallmentSchedule(purchase);
-                const paidInstallments = installmentSchedule.filter(inst => inst.isPaid).length;
-                const pendingInstallments = installmentSchedule.filter(inst => !inst.isPaid).length;
+              {installmentPurchases.map((purchaseGroup, index) => {
+                const firstInstallment = purchaseGroup[0];
+                const totalInstallments = firstInstallment.totalInstallments || purchaseGroup.length;
+                const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
+                const monthlyAmount = originalAmount / totalInstallments;
+                const paidInstallments = purchaseGroup.length;
+                const pendingInstallments = totalInstallments - paidInstallments;
                 
                 return (
-                  <div key={purchase.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{purchase.description}</h3>
+                        <h3 className="font-semibold text-lg">{firstInstallment.description}</h3>
                         <p className="text-sm text-gray-600">
-                          {purchase.category} • {purchase.paymentMethod}
+                          {firstInstallment.category} • {firstInstallment.paymentMethod}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Compra realizada em: {new Date(purchase.date).toLocaleDateString()}
+                          Compra realizada em: {new Date(firstInstallment.date).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <div className="text-xl font-bold text-blue-600">
-                            R$ {purchase.originalAmount?.toFixed(2)}
+                            R$ {originalAmount.toFixed(2)}
                           </div>
                           <div className="text-sm text-gray-600">
-                            {purchase.totalInstallments}x de R$ {(purchase.originalAmount! / purchase.totalInstallments!).toFixed(2)}
+                            {totalInstallments}x de R$ {monthlyAmount.toFixed(2)}
                           </div>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeletePurchase(purchase.id, purchase.description)}
+                          onClick={() => handleDeletePurchase(purchaseGroup, firstInstallment.description)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -201,7 +239,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                       <div 
                         className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(paidInstallments / purchase.totalInstallments!) * 100}%` }}
+                        style={{ width: `${(paidInstallments / totalInstallments) * 100}%` }}
                       ></div>
                     </div>
 
@@ -212,22 +250,25 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                         Próximas Parcelas
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {installmentSchedule
-                          .filter(inst => !inst.isPaid)
-                          .slice(0, 6)
-                          .map((installment, index) => (
-                            <div key={index} className="text-xs p-2 bg-white rounded border">
+                        {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
+                          const installmentNumber = paidInstallments + i + 1;
+                          const installmentDate = new Date(firstInstallment.date);
+                          installmentDate.setMonth(installmentDate.getMonth() + installmentNumber - 1);
+                          
+                          return (
+                            <div key={i} className="text-xs p-2 bg-white rounded border">
                               <div className="font-medium">
-                                {installment.installmentNumber}/{purchase.totalInstallments}
+                                {installmentNumber}/{totalInstallments}
                               </div>
                               <div className="text-gray-600">
-                                {new Date(installment.date).toLocaleDateString()}
+                                {installmentDate.toLocaleDateString()}
                               </div>
                               <div className="font-semibold text-orange-600">
-                                R$ {installment.amount.toFixed(2)}
+                                R$ {monthlyAmount.toFixed(2)}
                               </div>
                             </div>
-                          ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -320,7 +361,10 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
           <CardContent className="text-center py-8">
             <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-600 mb-2">Nenhuma compra parcelada</h3>
-            <p className="text-gray-500">Suas compras parceladas aparecerão aqui</p>
+            <p className="text-gray-500">
+              Suas compras parceladas aparecerão aqui. <br/>
+              Para adicionar uma compra parcelada, vá em "Adicionar Gasto" e marque a opção "Compra Parcelada".
+            </p>
           </CardContent>
         </Card>
       )}
