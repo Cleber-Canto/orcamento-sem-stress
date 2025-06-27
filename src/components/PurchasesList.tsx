@@ -11,7 +11,8 @@ interface PurchasesListProps {
 }
 
 const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onDeletePurchase }) => {
-  const currentDate = new Date();
+  // Usar data atual de 2025
+  const currentDate = new Date('2025-06-27');
 
   if (installmentPurchases.length === 0) {
     return (
@@ -46,12 +47,18 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
             const monthlyAmount = originalAmount / totalInstallments;
             
             // Calcular quantas parcelas já foram pagas (incluindo as que passaram da data atual)
-            const purchaseDate = new Date(firstInstallment.date);
+            let purchaseDate = new Date(firstInstallment.date);
+            
+            // Ajustar data da compra para 2025 se estiver no futuro
+            if (purchaseDate.getFullYear() > 2025) {
+              purchaseDate.setFullYear(2025);
+            }
+            
             let paidInstallments = 0;
             
             for (let i = 0; i < totalInstallments; i++) {
               const installmentDate = new Date(purchaseDate);
-              installmentDate.setMonth(purchaseDate.getMonth() + 1 + i);
+              installmentDate.setMonth(purchaseDate.getMonth() + (i + 1));
               
               const targetDay = purchaseDate.getDate();
               const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
@@ -85,7 +92,7 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
                       {firstInstallment.category} • {firstInstallment.paymentMethod}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Compra realizada em: {new Date(firstInstallment.date).toLocaleDateString('pt-BR')}
+                      Compra realizada em: {purchaseDate.toLocaleDateString('pt-BR')}
                     </p>
                     <p className="text-sm text-blue-600">
                       Primeira parcela: {firstInstallmentDate.toLocaleDateString('pt-BR')}

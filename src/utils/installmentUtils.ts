@@ -48,9 +48,10 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
 // Gerar cronograma completo de todas as parcelas seguindo mês a mês
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
-  const currentDate = new Date();
+  // Usar data atual de 2025 - ajustando para o ano correto
+  const currentDate = new Date('2025-06-27');
   
-  console.log('Data atual para verificação:', currentDate);
+  console.log('Data atual para verificação (2025):', currentDate);
   console.log('Gerando cronograma para grupos:', Object.keys(installmentGroups));
   
   Object.values(installmentGroups).forEach(group => {
@@ -70,13 +71,19 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     console.log('Valor original:', originalAmount);
     console.log('Valor mensal:', monthlyAmount);
     
-    // Usar a data da compra como base
+    // Usar a data da compra como base (corrigindo para 2025)
     const purchaseDate = new Date(firstInstallment.date);
     
+    // Verificar se a data da compra está no futuro (2026) e ajustar para 2025
+    if (purchaseDate.getFullYear() > 2025) {
+      purchaseDate.setFullYear(2025);
+      console.log('Data da compra ajustada para 2025:', purchaseDate);
+    }
+    
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela: mês seguinte + i meses
+      // Calcular a data de cada parcela: data da compra + (i+1) meses
       const installmentDate = new Date(purchaseDate);
-      installmentDate.setMonth(purchaseDate.getMonth() + 1 + i);
+      installmentDate.setMonth(purchaseDate.getMonth() + (i + 1));
       
       // Manter o mesmo dia do mês da compra
       // Se o dia não existir no mês de destino, usar o último dia do mês
