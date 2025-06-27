@@ -1,18 +1,45 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CreditCard, AlertCircle, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { CreditCard, AlertCircle, Trash2, Edit3 } from 'lucide-react';
 import { Expense } from '@/types/installments';
 
 interface PurchasesListProps {
   installmentPurchases: Expense[][];
   onDeletePurchase: (purchaseGroup: Expense[], description: string) => void;
+  onUpdatePurchaseDate?: (purchaseGroup: Expense[], newDate: string) => void;
 }
 
-const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onDeletePurchase }) => {
+const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onDeletePurchase, onUpdatePurchaseDate }) => {
   // Usar data atual de 2025
   const currentDate = new Date('2025-06-27');
+  const [editingPurchase, setEditingPurchase] = useState<{ group: Expense[], index: number } | null>(null);
+  const [newPurchaseDate, setNewPurchaseDate] = useState('');
+
+  const handleEditDate = (purchaseGroup: Expense[], index: number) => {
+    const firstInstallment = purchaseGroup[0];
+    let purchaseDate = new Date(firstInstallment.date);
+    
+    // Ajustar data da compra para 2025 se estiver no futuro
+    if (purchaseDate.getFullYear() > 2025) {
+      purchaseDate.setFullYear(2025);
+    }
+    
+    setNewPurchaseDate(purchaseDate.toISOString().split('T')[0]);
+    setEditingPurchase({ group: purchaseGroup, index });
+  };
+
+  const handleSaveDate = () => {
+    if (editingPurchase && onUpdatePurchaseDate && newPurchaseDate) {
+      onUpdatePurchaseDate(editingPurchase.group, newPurchaseDate);
+      setEditingPurchase(null);
+      setNewPurchaseDate('');
+    }
+  };
 
   if (installmentPurchases.length === 0) {
     return (
@@ -107,6 +134,42 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
                         {totalInstallments}x de R$ {monthlyAmount.toFixed(2)}
                       </div>
                     </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditDate(purchaseGroup, index)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Editar Data da Compra</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="purchase-date">Data da Compra</Label>
+                            <Input
+                              id="purchase-date"
+                              type="date"
+                              value={newPurchaseDate}
+                              onChange={(e) => setNewPurchaseDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setEditingPurchase(null)}>
+                              Cancelar
+                            </Button>
+                            <Button onClick={handleSaveDate}>
+                              Salvar
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <Button
                       variant="outline"
                       size="sm"

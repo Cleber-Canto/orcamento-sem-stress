@@ -48,6 +48,15 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
     });
   };
 
+  const handleUpdatePurchaseDate = (purchaseGroup: Expense[], newDate: string) => {
+    // Esta função seria implementada no componente pai (FinancialDashboard)
+    // Por enquanto, apenas mostra uma mensagem
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A edição de data da compra será implementada em breve",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -63,6 +72,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
       <PurchasesList
         installmentPurchases={installmentPurchases}
         onDeletePurchase={handleDeletePurchase}
+        onUpdatePurchaseDate={handleUpdatePurchaseDate}
       />
 
       <InstallmentsCalendar allInstallments={allInstallments} />
