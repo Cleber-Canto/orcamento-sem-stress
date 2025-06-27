@@ -48,7 +48,9 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
 // Gerar cronograma completo de todas as parcelas seguindo mês a mês
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
+  const currentDate = new Date();
   
+  console.log('Data atual para verificação:', currentDate);
   console.log('Gerando cronograma para grupos:', Object.keys(installmentGroups));
   
   Object.values(installmentGroups).forEach(group => {
@@ -87,11 +89,12 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         installmentDate.setDate(targetDay);
       }
       
-      // Verificar se esta parcela já foi paga (existe na lista de despesas)
+      // Verificar se esta parcela já foi paga (existe na lista de despesas) OU se já passou da data atual
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
-      const isPaid = !!existingInstallment;
+      const hasPassedCurrentDate = installmentDate <= currentDate;
+      const isPaid = !!existingInstallment || hasPassedCurrentDate;
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid}`);
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} (Existe: ${!!existingInstallment}, Passou da data: ${hasPassedCurrentDate})`);
       
       allInstallments.push({
         ...firstInstallment,
@@ -105,5 +108,8 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
   });
   
   console.log('Total de parcelas geradas:', allInstallments.length);
+  console.log('Parcelas pagas automaticamente por data:', allInstallments.filter(p => p.isPaid).length);
+  console.log('Parcelas pendentes:', allInstallments.filter(p => !p.isPaid).length);
+  
   return allInstallments;
 };

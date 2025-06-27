@@ -11,6 +11,8 @@ interface PurchasesListProps {
 }
 
 const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onDeletePurchase }) => {
+  const currentDate = new Date();
+
   if (installmentPurchases.length === 0) {
     return (
       <Card>
@@ -42,11 +44,35 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
             const totalInstallments = firstInstallment.totalInstallments || purchaseGroup.length;
             const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
             const monthlyAmount = originalAmount / totalInstallments;
-            const paidInstallments = purchaseGroup.length;
+            
+            // Calcular quantas parcelas já foram pagas (incluindo as que passaram da data atual)
+            const purchaseDate = new Date(firstInstallment.date);
+            let paidInstallments = 0;
+            
+            for (let i = 0; i < totalInstallments; i++) {
+              const installmentDate = new Date(purchaseDate);
+              installmentDate.setMonth(purchaseDate.getMonth() + 1 + i);
+              
+              const targetDay = purchaseDate.getDate();
+              const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
+              
+              if (targetDay > lastDayOfMonth) {
+                installmentDate.setDate(lastDayOfMonth);
+              } else {
+                installmentDate.setDate(targetDay);
+              }
+              
+              const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
+              const hasPassedCurrentDate = installmentDate <= currentDate;
+              
+              if (existingInstallment || hasPassedCurrentDate) {
+                paidInstallments++;
+              }
+            }
+            
             const pendingInstallments = totalInstallments - paidInstallments;
             
             // Calcular a data da primeira parcela: mês seguinte à compra
-            const purchaseDate = new Date(firstInstallment.date);
             const firstInstallmentDate = new Date(purchaseDate);
             firstInstallmentDate.setMonth(purchaseDate.getMonth() + 1);
             
@@ -105,45 +131,47 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
                 </div>
 
                 {/* Próximas Parcelas */}
-                <div className="mt-3">
-                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                    Próximas Parcelas
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
-                      const installmentNumber = paidInstallments + i + 1;
-                      
-                      // Calcular data da parcela: data da compra + número de meses
-                      const installmentDate = new Date(purchaseDate);
-                      installmentDate.setMonth(purchaseDate.getMonth() + installmentNumber);
-                      
-                      // Manter o mesmo dia da compra, ajustando se necessário
-                      const targetDay = purchaseDate.getDate();
-                      const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
-                      
-                      if (targetDay > lastDayOfMonth) {
-                        installmentDate.setDate(lastDayOfMonth);
-                      } else {
-                        installmentDate.setDate(targetDay);
-                      }
-                      
-                      return (
-                        <div key={i} className="text-xs p-2 bg-white rounded border">
-                          <div className="font-medium">
-                            {installmentNumber}/{totalInstallments}
+                {pendingInstallments > 0 && (
+                  <div className="mt-3">
+                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-orange-500" />
+                      Próximas Parcelas
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
+                        const installmentNumber = paidInstallments + i + 1;
+                        
+                        // Calcular data da parcela: data da compra + número de meses
+                        const installmentDate = new Date(purchaseDate);
+                        installmentDate.setMonth(purchaseDate.getMonth() + installmentNumber);
+                        
+                        // Manter o mesmo dia da compra, ajustando se necessário
+                        const targetDay = purchaseDate.getDate();
+                        const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
+                        
+                        if (targetDay > lastDayOfMonth) {
+                          installmentDate.setDate(lastDayOfMonth);
+                        } else {
+                          installmentDate.setDate(targetDay);
+                        }
+                        
+                        return (
+                          <div key={i} className="text-xs p-2 bg-white rounded border">
+                            <div className="font-medium">
+                              {installmentNumber}/{totalInstallments}
+                            </div>
+                            <div className="text-gray-600">
+                              {installmentDate.toLocaleDateString('pt-BR')}
+                            </div>
+                            <div className="font-semibold text-orange-600">
+                              R$ {monthlyAmount.toFixed(2)}
+                            </div>
                           </div>
-                          <div className="text-gray-600">
-                            {installmentDate.toLocaleDateString('pt-BR')}
-                          </div>
-                          <div className="font-semibold text-orange-600">
-                            R$ {monthlyAmount.toFixed(2)}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
