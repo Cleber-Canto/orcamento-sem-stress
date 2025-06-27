@@ -60,13 +60,15 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
     Object.values(installmentGroups).forEach(group => {
       if (group.length === 0) return;
       
-      const firstInstallment = group[0];
+      // Ordenar o grupo por data para pegar a primeira parcela (mais antiga)
+      const sortedGroup = group.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const firstInstallment = sortedGroup[0];
       const totalInstallments = firstInstallment.totalInstallments || group.length;
       const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
       const monthlyAmount = originalAmount / totalInstallments;
       
-      // Pegar a data da primeira parcela
-      const baseDate = new Date(group.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0].date);
+      // Usar a data da primeira parcela como base
+      const baseDate = new Date(firstInstallment.date);
       
       for (let i = 0; i < totalInstallments; i++) {
         const installmentDate = new Date(baseDate);
@@ -185,7 +187,8 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
           <CardContent>
             <div className="space-y-4">
               {installmentPurchases.map((purchaseGroup, index) => {
-                const firstInstallment = purchaseGroup[0];
+                const sortedGroup = purchaseGroup.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                const firstInstallment = sortedGroup[0];
                 const totalInstallments = firstInstallment.totalInstallments || purchaseGroup.length;
                 const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
                 const monthlyAmount = originalAmount / totalInstallments;
@@ -201,7 +204,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                           {firstInstallment.category} • {firstInstallment.paymentMethod}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Compra realizada em: {new Date(firstInstallment.date).toLocaleDateString()}
+                          Compra realizada em: {new Date(firstInstallment.date).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -252,7 +255,8 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
                           const installmentNumber = paidInstallments + i + 1;
-                          const installmentDate = new Date(firstInstallment.date);
+                          const baseDate = new Date(firstInstallment.date);
+                          const installmentDate = new Date(baseDate);
                           installmentDate.setMonth(installmentDate.getMonth() + installmentNumber - 1);
                           
                           return (
@@ -261,7 +265,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
                                 {installmentNumber}/{totalInstallments}
                               </div>
                               <div className="text-gray-600">
-                                {installmentDate.toLocaleDateString()}
+                                {installmentDate.toLocaleDateString('pt-BR')}
                               </div>
                               <div className="font-semibold text-orange-600">
                                 R$ {monthlyAmount.toFixed(2)}
