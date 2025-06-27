@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign } from 'lucide-react';
+import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
 import GoalsSection from './GoalsSection';
 import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
+import IncomeSection from './IncomeSection';
 
 interface Goal {
   id: number;
@@ -14,6 +16,15 @@ interface Goal {
   target: number;
   current: number;
   type: 'save' | 'limit';
+}
+
+interface Income {
+  id: number;
+  description: string;
+  amount: number;
+  type: 'salary' | 'extra' | 'investment' | 'freelance' | 'bonus';
+  date: string;
+  isRecurring: boolean;
 }
 
 interface Expense {
@@ -60,23 +71,50 @@ const FinancialDashboard = () => {
     return savedIncome ? JSON.parse(savedIncome) : 2500;
   });
 
-  // Salva despesas no localStorage sempre que mudarem
+  const [incomes, setIncomes] = useState<Income[]>(() => {
+    const savedIncomes = localStorage.getItem('financial-incomes');
+    return savedIncomes ? JSON.parse(savedIncomes) : [];
+  });
+
+  // Salva dados no localStorage sempre que mudarem
   useEffect(() => {
     localStorage.setItem('financial-expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  // Salva metas no localStorage sempre que mudarem
   useEffect(() => {
     localStorage.setItem('financial-goals', JSON.stringify(goals));
   }, [goals]);
 
-  // Salva renda no localStorage sempre que mudar
   useEffect(() => {
     localStorage.setItem('financial-income', JSON.stringify(monthlyIncome));
   }, [monthlyIncome]);
 
+  useEffect(() => {
+    localStorage.setItem('financial-incomes', JSON.stringify(incomes));
+  }, [incomes]);
+
+  const totalExtraIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
+  const totalIncome = monthlyIncome + totalExtraIncome;
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const remainingBalance = monthlyIncome - totalExpenses;
+  const remainingBalance = totalIncome - totalExpenses;
+
+  // Análise de parcelas por mês
+  const getInstallmentsByMonth = () => {
+    const installmentExpenses = expenses.filter(expense => expense.isInstallment && expense.installmentNumber && expense.totalInstallments);
+    const installmentsByMonth: { [key: string]: Expense[] } = {};
+    
+    installmentExpenses.forEach(expense => {
+      const expenseDate = new Date(expense.date);
+      const monthKey = `${expenseDate.getFullYear()}-${String(expenseDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!installmentsByMonth[monthKey]) {
+        installmentsByMonth[monthKey] = [];
+      }
+      installmentsByMonth[monthKey].push(expense);
+    });
+    
+    return installmentsByMonth;
+  };
 
   const addExpense = (expense: any) => {
     setExpenses([...expenses, { ...expense, id: Date.now() + Math.random() }]);
@@ -91,20 +129,32 @@ const FinancialDashboard = () => {
       case 'goals':
         return <GoalsSection goals={goals} setGoals={setGoals} />;
       case 'alerts':
-        return <AlertsSection expenses={expenses} goals={goals} monthlyIncome={monthlyIncome} />;
+        return <AlertsSection expenses={expenses} goals={goals} monthlyIncome={totalIncome} />;
       case 'education':
         return <EducationSection />;
+      case 'income':
+        return <IncomeSection 
+          monthlyIncome={monthlyIncome} 
+          setMonthlyIncome={setMonthlyIncome}
+          incomes={incomes}
+          setIncomes={setIncomes}
+        />;
       default:
         return (
           <div className="space-y-6">
-            {/* Resumo Financeiro */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            {/* Resumo Financeiro Melhorado */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-blue-700">Renda Mensal</CardTitle>
+                  <CardTitle className="text-sm font-medium text-green-700">Renda Total</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-800">R$ {monthlyIncome.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-green-800">R$ {totalIncome.toFixed(2)}</div>
+                  {totalExtraIncome > 0 && (
+                    <div className="text-xs text-green-600 mt-1">
+                      Base: R$ {monthlyIncome.toFixed(2)} + Extra: R$ {totalExtraIncome.toFixed(2)}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -114,22 +164,80 @@ const FinancialDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-800">R$ {totalExpenses.toFixed(2)}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {((totalExpenses / totalIncome) * 100).toFixed(1)}% da renda
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card className={`bg-gradient-to-br ${remainingBalance >= 0 ? 'from-green-50 to-green-100 border-green-200' : 'from-red-50 to-red-100 border-red-200'}`}>
+              <Card className={`bg-gradient-to-br ${remainingBalance >= 0 ? 'from-blue-50 to-blue-100 border-blue-200' : 'from-red-50 to-red-100 border-red-200'}`}>
                 <CardHeader className="pb-2">
-                  <CardTitle className={`text-sm font-medium ${remainingBalance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  <CardTitle className={`text-sm font-medium ${remainingBalance >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
                     Saldo Restante
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-2xl font-bold ${remainingBalance >= 0 ? 'text-green-800' : 'text-red-800'}`}>
+                  <div className={`text-2xl font-bold ${remainingBalance >= 0 ? 'text-blue-800' : 'text-red-800'}`}>
                     R$ {remainingBalance.toFixed(2)}
+                  </div>
+                  <div className={`text-xs mt-1 ${remainingBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    {remainingBalance >= 0 ? 'Sobrou dinheiro' : 'Gastou mais que ganhou'}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-purple-700">Taxa de Poupança</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-800">
+                    {totalIncome > 0 ? ((remainingBalance / totalIncome) * 100).toFixed(1) : '0.0'}%
+                  </div>
+                  <div className="text-xs text-purple-600 mt-1">
+                    {remainingBalance >= totalIncome * 0.2 ? '🎉 Excelente!' : 
+                     remainingBalance >= totalIncome * 0.1 ? '👍 Boa!' : '⚠️ Tente economizar mais'}
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Controle de Parcelas por Mês */}
+            {Object.keys(getInstallmentsByMonth()).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Parcelas por Mês
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(getInstallmentsByMonth()).map(([month, monthExpenses]) => {
+                      const monthTotal = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                      return (
+                        <div key={month} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-medium">
+                              {new Date(month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <span className="font-bold text-red-600">R$ {monthTotal.toFixed(2)}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {monthExpenses.map(expense => (
+                              <div key={expense.id} className="text-sm text-gray-600 flex justify-between">
+                                <span>{expense.description} ({expense.installmentNumber}/{expense.totalInstallments})</span>
+                                <span>R$ {expense.amount.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Últimas Despesas */}
             <Card>
@@ -235,6 +343,14 @@ const FinancialDashboard = () => {
           >
             <TrendingUp className="h-4 w-4" />
             Dashboard
+          </Button>
+          <Button
+            variant={activeTab === 'income' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('income')}
+            className="flex items-center gap-2"
+          >
+            <Wallet className="h-4 w-4" />
+            Renda
           </Button>
           <Button
             variant={activeTab === 'add' ? 'default' : 'outline'}
