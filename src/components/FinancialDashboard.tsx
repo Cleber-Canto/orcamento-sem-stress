@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet } from 'lucide-react';
+import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet, CreditCard } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
 import GoalsSection from './GoalsSection';
 import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
 import IncomeSection from './IncomeSection';
+import InstallmentsSection from './InstallmentsSection';
 
 interface Goal {
   id: number;
@@ -139,6 +139,8 @@ const FinancialDashboard = () => {
           incomes={incomes}
           setIncomes={setIncomes}
         />;
+      case 'installments':
+        return <InstallmentsSection expenses={expenses} />;
       default:
         return (
           <div className="space-y-6">
@@ -359,6 +361,14 @@ const FinancialDashboard = () => {
           >
             <PlusCircle className="h-4 w-4" />
             Adicionar Gasto
+          </Button>
+          <Button
+            variant={activeTab === 'installments' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('installments')}
+            className="flex items-center gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            Parcelas
           </Button>
           <Button
             variant={activeTab === 'charts' ? 'default' : 'outline'}

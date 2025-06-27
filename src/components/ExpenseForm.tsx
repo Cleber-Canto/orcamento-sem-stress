@@ -99,6 +99,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
     // Se for parcelado, criar múltiplas despesas
     if (isInstallment && parseInt(installments) > 1) {
       const installmentAmount = parseFloat(amount) / parseInt(installments);
+      const originalAmount = parseFloat(amount);
       
       for (let i = 0; i < parseInt(installments); i++) {
         const installmentDate = new Date(date);
@@ -106,18 +107,20 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         
         const installmentExpense = {
           ...baseExpense,
-          description: `${description} (${i + 1}/${installments})`,
+          description: `${description}`,
           amount: installmentAmount,
           date: installmentDate.toISOString().split('T')[0],
           installmentNumber: i + 1,
-          totalInstallments: parseInt(installments)
+          totalInstallments: parseInt(installments),
+          originalAmount: originalAmount, // Salvar o valor total original
+          isInstallment: true
         };
         
         onAddExpense(installmentExpense);
       }
       
       toast({
-        title: "Despesa parcelada adicionada!",
+        title: "Compra parcelada cadastrada!",
         description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
       });
     } else {
@@ -235,29 +238,51 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
               />
               <Label htmlFor="installment" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                Compra Parcelada
+                Compra Parcelada (Cartão de Crédito)
               </Label>
             </div>
             
             {isInstallment && (
-              <div className="ml-6 space-y-2">
-                <Label htmlFor="installments">Número de Parcelas</Label>
-                <Select value={installments} onValueChange={setInstallments}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num}x
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {amount && installments && (
-                  <p className="text-sm text-blue-600">
-                    Valor por parcela: R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}
+              <div className="ml-6 space-y-3">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium mb-1">
+                    🔄 Como funciona o parcelamento:
                   </p>
+                  <p className="text-xs text-blue-700">
+                    • O valor será dividido igualmente entre as parcelas<br/>
+                    • Cada parcela será lançada nos próximos meses automaticamente<br/>
+                    • Você pode acompanhar o cronograma na aba "Parcelas"
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="installments">Número de Parcelas</Label>
+                  <Select value={installments} onValueChange={setInstallments}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}x
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {amount && installments && (
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <p className="text-sm font-medium text-green-800">
+                      💰 Resumo do Parcelamento:
+                    </p>
+                    <div className="text-sm text-green-700 mt-1">
+                      <p>• Valor total: R$ {parseFloat(amount).toFixed(2)}</p>
+                      <p>• Parcelas: {installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}</p>
+                      <p>• Primeira parcela: {new Date(date).toLocaleDateString()}</p>
+                      <p>• Última parcela: {new Date(new Date(date).setMonth(new Date(date).getMonth() + parseInt(installments) - 1)).toLocaleDateString()}</p>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
