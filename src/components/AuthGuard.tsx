@@ -12,41 +12,23 @@ interface AuthGuardProps {
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  // Se a chave do Clerk não estiver configurada, mostra instruções
+  // Se a chave do Clerk não estiver configurada, mostra a aplicação com um aviso
   if (!publishableKey) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
-        <div className="container mx-auto p-4 max-w-md">
-          <Card className="shadow-2xl border-0 border-red-200">
-            <CardHeader className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-bold text-red-800">
-                  Configuração Necessária
-                </CardTitle>
-                <p className="text-red-600 mt-2 text-sm">
-                  Para usar o sistema de login seguro, você precisa configurar sua chave do Clerk
+      <div className="relative">
+        <div className="absolute top-4 right-4 z-50">
+          <Card className="bg-yellow-50 border-yellow-200 shadow-lg">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <p className="text-xs text-yellow-800">
+                  Login não configurado - <a href="https://go.clerk.com/lovable" target="_blank" className="underline">Configure aqui</a>
                 </p>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-red-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-red-800 mb-2">Como configurar:</h3>
-                <ol className="text-sm text-red-700 space-y-1">
-                  <li>1. Visite <a href="https://go.clerk.com/lovable" target="_blank" className="underline font-medium">https://go.clerk.com/lovable</a></li>
-                  <li>2. Crie sua conta gratuita</li>
-                  <li>3. Copie sua Publishable Key</li>
-                  <li>4. Cole a chave como VITE_CLERK_PUBLISHABLE_KEY</li>
-                </ol>
-              </div>
-              <p className="text-xs text-center text-red-500">
-                Após configurar, recarregue a página
-              </p>
             </CardContent>
           </Card>
         </div>
+        {children}
       </div>
     );
   }
