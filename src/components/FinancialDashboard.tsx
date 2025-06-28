@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,13 +32,13 @@ interface Purchase {
   description?: string;
 }
 
+// Updated Goal interface to match GoalsSection expectations
 interface Goal {
   id: number;
-  title: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline: string;
-  category: string;
+  name: string;
+  target: number;
+  current: number;
+  type: 'save' | 'limit';
 }
 
 const FinancialDashboard = () => {
