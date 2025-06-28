@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,10 +47,14 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
   });
 
   const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({
+  const [newCategory, setNewCategory] = useState<{
+    category: string;
+    budgetAmount: number;
+    priority: 'essential' | 'important' | 'optional';
+  }>({
     category: '',
     budgetAmount: 0,
-    priority: 'important' as const
+    priority: 'important'
   });
 
   // Salvar no localStorage
