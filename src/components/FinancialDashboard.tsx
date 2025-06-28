@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,10 +176,7 @@ const FinancialDashboard = () => {
             <TabsContent value="expenses" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ExpenseForm onAddExpense={addExpense} />
-                <ExpenseChart 
-                  expenses={expenses} 
-                  onDeleteExpense={deleteExpense}
-                />
+                <ExpenseChart expenses={expenses} />
               </div>
             </TabsContent>
 
@@ -187,31 +185,19 @@ const FinancialDashboard = () => {
             </TabsContent>
 
             <TabsContent value="income">
-              <IncomeSection 
-                monthlyIncome={monthlyIncome}
-                onUpdateIncome={setMonthlyIncome}
-              />
+              <IncomeSection monthlyIncome={monthlyIncome} />
             </TabsContent>
 
             <TabsContent value="installments">
-              <InstallmentsSection 
-                purchases={purchases}
-                onAddPurchase={addPurchase}
-                onDeletePurchase={deletePurchase}
-                onUpdatePurchase={updatePurchase}
-              />
+              <InstallmentsSection />
             </TabsContent>
 
             <TabsContent value="goals">
-              <GoalsSection monthlyIncome={monthlyIncome} monthlyExpenses={monthlyExpenses} />
+              <GoalsSection />
             </TabsContent>
 
             <TabsContent value="alerts">
-              <AlertsSection 
-                expenses={expenses}
-                monthlyIncome={monthlyIncome}
-                purchases={purchases}
-              />
+              <AlertsSection expenses={expenses} monthlyIncome={monthlyIncome} />
             </TabsContent>
 
             <TabsContent value="education">
