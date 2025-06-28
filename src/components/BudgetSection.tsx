@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, AlertTriangle, Plus, Edit, Trash2, DollarSign } from 'lucide-react';
 import BudgetAnalysis from './BudgetAnalysis';
 import BudgetCategories from './BudgetCategories';
+import BudgetPieChart from './BudgetPieChart';
 
 interface BudgetCategory {
   id: number;
@@ -134,7 +135,10 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Orçamento Mensal</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Controle de Orçamento Inteligente</h2>
+          <p className="text-gray-600">Visualize e controle seus gastos com gráfico de pizza</p>
+        </div>
         <div className="flex items-center gap-4">
           <div>
             <Label htmlFor="month-select">Mês</Label>
@@ -278,6 +282,12 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
           </CardContent>
         </Card>
       </div>
+
+      {/* Novo Gráfico de Pizza */}
+      <BudgetPieChart 
+        budgetCategories={currentBudget}
+        monthlyIncome={monthlyIncome}
+      />
 
       {/* Alertas */}
       {(overdraftCategories.length > 0 || nearLimitCategories.length > 0) && (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +32,15 @@ interface Purchase {
   description?: string;
 }
 
+interface Goal {
+  id: number;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  category: string;
+}
+
 const FinancialDashboard = () => {
   const [expenses, setExpenses] = useState<Expense[]>(() => {
     const saved = localStorage.getItem('expenses');
@@ -47,6 +55,16 @@ const FinancialDashboard = () => {
   const [monthlyIncome, setMonthlyIncome] = useState(() => {
     const saved = localStorage.getItem('monthly-income');
     return saved ? parseFloat(saved) : 0;
+  });
+
+  const [incomes, setIncomes] = useState(() => {
+    const saved = localStorage.getItem('incomes');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [goals, setGoals] = useState<Goal[]>(() => {
+    const saved = localStorage.getItem('goals');
+    return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
@@ -185,19 +203,34 @@ const FinancialDashboard = () => {
             </TabsContent>
 
             <TabsContent value="income">
-              <IncomeSection monthlyIncome={monthlyIncome} />
+              <IncomeSection 
+                monthlyIncome={monthlyIncome}
+                setMonthlyIncome={setMonthlyIncome}
+                incomes={incomes}
+                setIncomes={setIncomes}
+              />
             </TabsContent>
 
             <TabsContent value="installments">
-              <InstallmentsSection />
+              <InstallmentsSection 
+                expenses={expenses}
+                onDeleteExpense={deleteExpense}
+              />
             </TabsContent>
 
             <TabsContent value="goals">
-              <GoalsSection />
+              <GoalsSection 
+                goals={goals}
+                setGoals={setGoals}
+              />
             </TabsContent>
 
             <TabsContent value="alerts">
-              <AlertsSection expenses={expenses} monthlyIncome={monthlyIncome} />
+              <AlertsSection 
+                expenses={expenses} 
+                monthlyIncome={monthlyIncome}
+                goals={goals}
+              />
             </TabsContent>
 
             <TabsContent value="education">
