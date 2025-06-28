@@ -9,6 +9,7 @@ import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
 import IncomeSection from './IncomeSection';
 import InstallmentsSection from './InstallmentsSection';
+import BudgetSection from './BudgetSection';
 
 interface Goal {
   id: number;
@@ -145,6 +146,8 @@ const FinancialDashboard = () => {
         />;
       case 'installments':
         return <InstallmentsSection expenses={expenses} onDeleteExpense={deleteExpense} />;
+      case 'budget':
+        return <BudgetSection expenses={expenses} monthlyIncome={totalIncome} />;
       default:
         return (
           <div className="space-y-6">
@@ -338,6 +341,14 @@ const FinancialDashboard = () => {
           >
             <PlusCircle className="h-4 w-4" />
             Adicionar Gasto
+          </Button>
+          <Button
+            variant={activeTab === 'budget' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('budget')}
+            className="flex items-center gap-2"
+          >
+            <Target className="h-4 w-4" />
+            Orçamento
           </Button>
           <Button
             variant={activeTab === 'installments' ? 'default' : 'outline'}
