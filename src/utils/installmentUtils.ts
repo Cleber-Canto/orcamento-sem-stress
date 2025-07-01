@@ -7,10 +7,18 @@ export const calculateFirstInstallmentDate = (purchaseDate: string, cardDueDay: 
   
   console.log('Data da compra original:', purchase);
   
-  // A primeira parcela será no próximo vencimento da fatura após a compra
+  // Se a compra foi antes do dia 28 do mês, a primeira parcela vence no mesmo mês
+  // Se foi depois do dia 28, vence no mês seguinte
   const firstInstallmentDate = new Date(purchase);
-  firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-  firstInstallmentDate.setDate(cardDueDay); // Dia da fatura (padrão: 28)
+  
+  if (purchase.getDate() <= cardDueDay) {
+    // Compra antes do vencimento, primeira parcela no mesmo mês
+    firstInstallmentDate.setDate(cardDueDay);
+  } else {
+    // Compra depois do vencimento, primeira parcela no mês seguinte
+    firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
+    firstInstallmentDate.setDate(cardDueDay);
+  }
   
   console.log('Primeira parcela calculada para:', firstInstallmentDate);
   
@@ -89,12 +97,14 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     // Usar a data da compra como base para calcular as parcelas
     const purchaseDate = new Date(firstInstallment.date);
     
-    // Gerar todas as parcelas do cronograma seguindo a data da fatura (dia 28 por padrão)
+    // Calcular a primeira parcela corretamente
+    const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+    
+    // Gerar todas as parcelas do cronograma
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela: primeira parcela no mês seguinte da compra, sempre no dia 28
-      const installmentDate = new Date(purchaseDate);
-      installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
-      installmentDate.setDate(28); // Vencimento da fatura sempre no dia 28
+      // Calcular a data de cada parcela a partir da primeira parcela
+      const installmentDate = new Date(firstInstallmentDate);
+      installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
       
       // Corrigir meses que não têm dia 28 (caso específico de fevereiro)
       if (installmentDate.getDate() !== 28) {
@@ -107,11 +117,14 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
       const hasPassedCurrentDate = installmentDate < currentDate;
       
       // Lógica corrigida:
-      // - Uma parcela está paga apenas se existe um registro desta parcela no banco de dados
-      // - Não marcar automaticamente como paga só porque a data passou
-      const isPaid = !!existingInstallment;
+      // - Se existe registro no banco: está paga
+      // - Se não existe registro mas a data já passou há mais de 30 dias: considera paga (pagamento automático)
+      // - Se não existe registro e a data passou recentemente: vencida
+      // - Se a data ainda não chegou: pendente
+      const daysSinceDue = hasPassedCurrentDate ? Math.floor((currentDate.getTime() - installmentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+      const isPaid = !!existingInstallment || (hasPassedCurrentDate && daysSinceDue > 30);
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment}`);
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment} - Dias vencidos: ${daysSinceDue}`);
       
       allInstallments.push({
         ...firstInstallment,

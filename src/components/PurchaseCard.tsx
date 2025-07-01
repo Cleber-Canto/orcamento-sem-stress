@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Trash2, Edit3, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Expense } from '@/types/installments';
 import PurchaseEditDialog from './PurchaseEditDialog';
+import { calculateFirstInstallmentDate } from '@/utils/installmentUtils';
 
 interface PurchaseCardProps {
   purchaseGroup: Expense[];
@@ -34,10 +34,13 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   let pendingInstallments = 0;
   const installmentDetails = [];
   
+  // Calcular a primeira parcela corretamente
+  const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+  
   for (let i = 0; i < totalInstallments; i++) {
-    const installmentDate = new Date(purchaseDate);
-    installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
-    installmentDate.setDate(28); // Vencimento sempre no dia 28
+    // Calcular a data de cada parcela a partir da primeira parcela
+    const installmentDate = new Date(firstInstallmentDate);
+    installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
     
     // Corrigir meses que não têm dia 28 (fevereiro)
     if (installmentDate.getDate() !== 28) {
@@ -48,12 +51,14 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate < currentDate;
     
-    // Lógica correta:
-    // - Paga: apenas se existe registro no banco de dados
-    // - Vencida: se a data já passou E não existe registro
-    // - A vencer: se a data ainda não passou E não existe registro
-    const isPaid = !!existingInstallment;
-    const isOverdue = hasPassedCurrentDate && !existingInstallment;
+    // Lógica corrigida:
+    // - Se existe registro no banco: está paga
+    // - Se não existe registro mas a data já passou há mais de 30 dias: considera paga (pagamento automático)
+    // - Se não existe registro e a data passou recentemente: vencida
+    // - Se a data ainda não chegou: pendente
+    const daysSinceDue = hasPassedCurrentDate ? Math.floor((currentDate.getTime() - installmentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    const isPaid = !!existingInstallment || (hasPassedCurrentDate && daysSinceDue > 30);
+    const isOverdue = hasPassedCurrentDate && !existingInstallment && daysSinceDue <= 30;
     const isPending = !hasPassedCurrentDate && !existingInstallment;
     
     if (isPaid) paidInstallments++;
@@ -74,11 +79,6 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       amount: monthlyAmount
     });
   }
-  
-  // Calcular a data da primeira parcela para exibição
-  const firstInstallmentDate = new Date(purchaseDate);
-  firstInstallmentDate.setMonth(purchaseDate.getMonth() + 1);
-  firstInstallmentDate.setDate(28);
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
@@ -125,7 +125,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       <div className="bg-blue-100 p-3 rounded-lg mb-4">
         <h4 className="font-medium text-blue-800 mb-1">📅 Como funcionam as parcelas:</h4>
         <p className="text-sm text-blue-700">
-          As parcelas seguem a data de vencimento da fatura do cartão (dia 28), não a data da compra. 
+          As parcelas seguem a data de vencimento da fatura do cartão (dia 28). 
           Compra realizada em {purchaseDate.toLocaleDateString('pt-BR')}, 
           primeira parcela vence em {firstInstallmentDate.toLocaleDateString('pt-BR')}.
         </p>
