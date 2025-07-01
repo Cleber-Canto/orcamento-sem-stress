@@ -1,24 +1,14 @@
-
 import { Expense, EnhancedInstallment } from '@/types/installments';
 
-// Função para calcular a data da primeira parcela baseada na data da fatura do cartão
-export const calculateFirstInstallmentDate = (purchaseDate: string, cardDueDay: number = 28) => {
+// Função para calcular a data da primeira parcela baseada na data da compra
+export const calculateFirstInstallmentDate = (purchaseDate: string) => {
   const purchase = new Date(purchaseDate);
   
   console.log('Data da compra original:', purchase);
   
-  // Se a compra foi antes do dia 28 do mês, a primeira parcela vence no mesmo mês
-  // Se foi depois do dia 28, vence no mês seguinte
+  // A primeira parcela vence no mês seguinte, mantendo o mesmo dia
   const firstInstallmentDate = new Date(purchase);
-  
-  if (purchase.getDate() <= cardDueDay) {
-    // Compra antes do vencimento, primeira parcela no mesmo mês
-    firstInstallmentDate.setDate(cardDueDay);
-  } else {
-    // Compra depois do vencimento, primeira parcela no mês seguinte
-    firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-    firstInstallmentDate.setDate(cardDueDay);
-  }
+  firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
   
   console.log('Primeira parcela calculada para:', firstInstallmentDate);
   
@@ -60,7 +50,7 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
   return grouped;
 };
 
-// Gerar cronograma completo de todas as parcelas seguindo a data da fatura
+// Gerar cronograma completo de todas as parcelas seguindo a data da compra
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
   const currentDate = new Date();
@@ -97,34 +87,36 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     // Usar a data da compra como base para calcular as parcelas
     const purchaseDate = new Date(firstInstallment.date);
     
-    // Calcular a primeira parcela corretamente
+    // Calcular a primeira parcela (mês seguinte, mesmo dia)
     const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
     
     // Gerar todas as parcelas do cronograma
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela a partir da primeira parcela
+      // Calcular a data de cada parcela mantendo o mesmo dia
       const installmentDate = new Date(firstInstallmentDate);
       installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
       
-      // Corrigir meses que não têm dia 28 (caso específico de fevereiro)
-      if (installmentDate.getDate() !== 28) {
+      // Ajustar para o último dia do mês se o dia não existir (ex: 31 em fevereiro)
+      if (installmentDate.getMonth() !== (firstInstallmentDate.getMonth() + i) % 12) {
         installmentDate.setDate(0); // Vai para o último dia do mês anterior
-        installmentDate.setDate(28); // Tenta novamente
       }
       
       // Verificar se esta parcela já foi registrada
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
       const hasPassedCurrentDate = installmentDate < currentDate;
       
-      // Lógica corrigida:
+      // Lógica de status:
       // - Se existe registro no banco: está paga
-      // - Se não existe registro mas a data já passou há mais de 30 dias: considera paga (pagamento automático)
-      // - Se não existe registro e a data passou recentemente: vencida
+      // - Se não existe registro mas é muito antiga (mais de 6 meses): considera paga automaticamente
+      // - Se não existe registro e passou há pouco tempo: vencida  
       // - Se a data ainda não chegou: pendente
-      const daysSinceDue = hasPassedCurrentDate ? Math.floor((currentDate.getTime() - installmentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-      const isPaid = !!existingInstallment || (hasPassedCurrentDate && daysSinceDue > 30);
+      const monthsSinceDue = hasPassedCurrentDate ? 
+        (currentDate.getFullYear() - installmentDate.getFullYear()) * 12 + 
+        (currentDate.getMonth() - installmentDate.getMonth()) : 0;
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment} - Dias vencidos: ${daysSinceDue}`);
+      const isPaid = !!existingInstallment || (hasPassedCurrentDate && monthsSinceDue > 6);
+      
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment} - Meses vencidos: ${monthsSinceDue}`);
       
       allInstallments.push({
         ...firstInstallment,

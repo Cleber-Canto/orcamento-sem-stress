@@ -28,37 +28,35 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   
   const purchaseDate = new Date(firstInstallment.date);
   
-  // Calcular parcelas com lógica corrigida
+  // Calcular parcelas seguindo o dia da compra
   let paidInstallments = 0;
   let overdueInstallments = 0;
   let pendingInstallments = 0;
   const installmentDetails = [];
   
-  // Calcular a primeira parcela corretamente
+  // Calcular a primeira parcela (mês seguinte, mesmo dia)
   const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
   
   for (let i = 0; i < totalInstallments; i++) {
-    // Calcular a data de cada parcela a partir da primeira parcela
+    // Calcular a data de cada parcela mantendo o mesmo dia
     const installmentDate = new Date(firstInstallmentDate);
     installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
     
-    // Corrigir meses que não têm dia 28 (fevereiro)
-    if (installmentDate.getDate() !== 28) {
+    // Ajustar para o último dia do mês se o dia não existir
+    if (installmentDate.getMonth() !== (firstInstallmentDate.getMonth() + i) % 12) {
       installmentDate.setDate(0);
-      installmentDate.setDate(28);
     }
     
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate < currentDate;
     
-    // Lógica corrigida:
-    // - Se existe registro no banco: está paga
-    // - Se não existe registro mas a data já passou há mais de 30 dias: considera paga (pagamento automático)
-    // - Se não existe registro e a data passou recentemente: vencida
-    // - Se a data ainda não chegou: pendente
-    const daysSinceDue = hasPassedCurrentDate ? Math.floor((currentDate.getTime() - installmentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const isPaid = !!existingInstallment || (hasPassedCurrentDate && daysSinceDue > 30);
-    const isOverdue = hasPassedCurrentDate && !existingInstallment && daysSinceDue <= 30;
+    // Lógica de status corrigida
+    const monthsSinceDue = hasPassedCurrentDate ? 
+      (currentDate.getFullYear() - installmentDate.getFullYear()) * 12 + 
+      (currentDate.getMonth() - installmentDate.getMonth()) : 0;
+    
+    const isPaid = !!existingInstallment || (hasPassedCurrentDate && monthsSinceDue > 6);
+    const isOverdue = hasPassedCurrentDate && !existingInstallment && monthsSinceDue <= 6;
     const isPending = !hasPassedCurrentDate && !existingInstallment;
     
     if (isPaid) paidInstallments++;
@@ -125,7 +123,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       <div className="bg-blue-100 p-3 rounded-lg mb-4">
         <h4 className="font-medium text-blue-800 mb-1">📅 Como funcionam as parcelas:</h4>
         <p className="text-sm text-blue-700">
-          As parcelas seguem a data de vencimento da fatura do cartão (dia 28). 
+          As parcelas mantêm o mesmo dia da compra. 
           Compra realizada em {purchaseDate.toLocaleDateString('pt-BR')}, 
           primeira parcela vence em {firstInstallmentDate.toLocaleDateString('pt-BR')}.
         </p>
