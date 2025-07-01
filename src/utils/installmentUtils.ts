@@ -1,3 +1,4 @@
+
 import { Expense, EnhancedInstallment } from '@/types/installments';
 
 // Função para calcular a data da primeira parcela baseada na data da fatura do cartão
@@ -108,7 +109,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         amount: monthlyAmount,
         date: installmentDate.toISOString().split('T')[0],
         isPaid: isPaid,
-        id: typeof firstInstallment.id === 'string' ? `${firstInstallment.id}-${i + 1}` : `${firstInstallment.id}-${i + 1}`
+        id: `${firstInstallment.id}-${i + 1}`
       });
     }
   });
