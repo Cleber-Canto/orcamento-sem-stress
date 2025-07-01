@@ -20,9 +20,13 @@ export const calculateFirstInstallmentDate = (purchaseDate: string) => {
 export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
   console.log('Iniciando agrupamento. Total de despesas:', expenses.length);
   
+  // Filtrar apenas despesas parceladas
   const installmentExpenses = expenses.filter(expense => {
-    console.log('Verificando despesa:', expense.description, 'isInstallment:', expense.isInstallment);
-    return expense.isInstallment === true;
+    const isInstallment = expense.isInstallment === true || 
+                         (expense.installmentNumber && expense.installmentNumber > 0) ||
+                         (expense.totalInstallments && expense.totalInstallments > 1);
+    console.log('Verificando despesa:', expense.description, 'isInstallment:', isInstallment);
+    return isInstallment;
   });
   
   console.log('Despesas parceladas encontradas:', installmentExpenses.length);
@@ -31,8 +35,10 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
   const grouped: { [key: string]: Expense[] } = {};
   
   installmentExpenses.forEach(expense => {
-    // Criar chave única baseada na descrição e valor original
-    const key = `${expense.description}-${expense.originalAmount || expense.amount}`;
+    // Criar chave única baseada na descrição, valor original e data base
+    const originalAmount = expense.originalAmount || expense.amount;
+    const baseDate = expense.date.substring(0, 7); // YYYY-MM para agrupar por mês base
+    const key = `${expense.description}-${originalAmount}-${baseDate}`;
     console.log('Criando chave para agrupamento:', key);
     
     if (!grouped[key]) {
@@ -45,13 +51,12 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
   return grouped;
 };
 
-// Gerar cronograma completo de todas as parcelas seguindo mês a mês
+// Gerar cronograma completo de todas as parcelas
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
-  // Usar data atual de 2025 - ajustando para o ano correto
-  const currentDate = new Date('2025-06-27');
+  const currentDate = new Date();
   
-  console.log('Data atual para verificação (2025):', currentDate);
+  console.log('Data atual para verificação:', currentDate);
   console.log('Gerando cronograma para grupos:', Object.keys(installmentGroups));
   
   Object.values(installmentGroups).forEach(group => {
@@ -62,31 +67,34 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     // Ordenar o grupo por data para pegar a primeira parcela (mais antiga)
     const sortedGroup = group.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const firstInstallment = sortedGroup[0];
-    const totalInstallments = firstInstallment.totalInstallments || group.length;
-    const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
+    
+    // Determinar o total de parcelas e valor original
+    const totalInstallments = firstInstallment.totalInstallments || 
+                             Math.max(...group.map(g => g.installmentNumber || 1)) ||
+                             group.length;
+    
+    const originalAmount = firstInstallment.originalAmount || 
+                          (firstInstallment.amount * totalInstallments);
+    
     const monthlyAmount = originalAmount / totalInstallments;
     
-    console.log('Primeira parcela do grupo:', firstInstallment);
-    console.log('Total de parcelas:', totalInstallments);
-    console.log('Valor original:', originalAmount);
-    console.log('Valor mensal:', monthlyAmount);
+    console.log('Dados do grupo:', {
+      description: firstInstallment.description,
+      totalInstallments,
+      originalAmount,
+      monthlyAmount
+    });
     
-    // Usar a data da compra como base (corrigindo para 2025)
+    // Usar a data da compra como base
     const purchaseDate = new Date(firstInstallment.date);
     
-    // Verificar se a data da compra está no futuro (2026) e ajustar para 2025
-    if (purchaseDate.getFullYear() > 2025) {
-      purchaseDate.setFullYear(2025);
-      console.log('Data da compra ajustada para 2025:', purchaseDate);
-    }
-    
+    // Gerar todas as parcelas do cronograma
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela: data da compra + (i+1) meses
+      // Calcular a data de cada parcela: data da compra + i meses
       const installmentDate = new Date(purchaseDate);
-      installmentDate.setMonth(purchaseDate.getMonth() + (i + 1));
+      installmentDate.setMonth(purchaseDate.getMonth() + i);
       
       // Manter o mesmo dia do mês da compra
-      // Se o dia não existir no mês de destino, usar o último dia do mês
       const targetDay = purchaseDate.getDate();
       const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
       
@@ -96,12 +104,12 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         installmentDate.setDate(targetDay);
       }
       
-      // Verificar se esta parcela já foi paga (existe na lista de despesas) OU se já passou da data atual
+      // Verificar se esta parcela já foi registrada ou já passou
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
       const hasPassedCurrentDate = installmentDate <= currentDate;
       const isPaid = !!existingInstallment || hasPassedCurrentDate;
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} (Existe: ${!!existingInstallment}, Passou da data: ${hasPassedCurrentDate})`);
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid}`);
       
       allInstallments.push({
         ...firstInstallment,
@@ -109,14 +117,42 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         amount: monthlyAmount,
         date: installmentDate.toISOString().split('T')[0],
         isPaid: isPaid,
-        id: existingInstallment?.id || firstInstallment.id + i
+        id: existingInstallment?.id || `${firstInstallment.id}-${i + 1}`
       });
     }
   });
   
   console.log('Total de parcelas geradas:', allInstallments.length);
-  console.log('Parcelas pagas automaticamente por data:', allInstallments.filter(p => p.isPaid).length);
+  console.log('Parcelas pagas:', allInstallments.filter(p => p.isPaid).length);
   console.log('Parcelas pendentes:', allInstallments.filter(p => !p.isPaid).length);
   
   return allInstallments;
+};
+
+// Função para calcular o total pendente de parcelas
+export const calculatePendingInstallmentsTotal = (installments: EnhancedInstallment[]) => {
+  return installments
+    .filter(inst => !inst.isPaid)
+    .reduce((sum, inst) => sum + inst.amount, 0);
+};
+
+// Função para calcular estatísticas de parcelas
+export const calculateInstallmentStats = (installments: EnhancedInstallment[]) => {
+  const totalInstallments = installments.length;
+  const paidInstallments = installments.filter(inst => inst.isPaid).length;
+  const pendingInstallments = totalInstallments - paidInstallments;
+  
+  const totalAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
+  const paidAmount = installments.filter(inst => inst.isPaid).reduce((sum, inst) => sum + inst.amount, 0);
+  const pendingAmount = totalAmount - paidAmount;
+  
+  return {
+    totalInstallments,
+    paidInstallments,
+    pendingInstallments,
+    totalAmount,
+    paidAmount,
+    pendingAmount,
+    completionPercentage: totalInstallments > 0 ? (paidInstallments / totalInstallments) * 100 : 0
+  };
 };
