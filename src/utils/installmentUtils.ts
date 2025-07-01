@@ -102,16 +102,16 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         installmentDate.setDate(28); // Tenta novamente
       }
       
-      // Verificar se esta parcela já foi registrada ou já passou
+      // Verificar se esta parcela já foi registrada
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
-      const hasPassedCurrentDate = installmentDate <= currentDate;
+      const hasPassedCurrentDate = installmentDate < currentDate;
       
-      // Uma parcela está paga se:
-      // 1. Existe um registro desta parcela no banco de dados, OU
-      // 2. A data da parcela já passou da data atual
-      const isPaid = !!existingInstallment || hasPassedCurrentDate;
+      // Lógica corrigida:
+      // - Uma parcela está paga apenas se existe um registro desta parcela no banco de dados
+      // - Não marcar automaticamente como paga só porque a data passou
+      const isPaid = !!existingInstallment;
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid}`);
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment}`);
       
       allInstallments.push({
         ...firstInstallment,

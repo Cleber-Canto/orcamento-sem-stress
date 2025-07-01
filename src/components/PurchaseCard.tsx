@@ -28,9 +28,10 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   
   const purchaseDate = new Date(firstInstallment.date);
   
-  // Calcular parcelas usando a nova lógica corrigida
+  // Calcular parcelas com lógica corrigida
   let paidInstallments = 0;
   let overdueInstallments = 0;
+  let pendingInstallments = 0;
   const installmentDetails = [];
   
   for (let i = 0; i < totalInstallments; i++) {
@@ -45,25 +46,34 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     }
     
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
-    const hasPassedCurrentDate = installmentDate <= currentDate;
+    const hasPassedCurrentDate = installmentDate < currentDate;
     
-    // Uma parcela está paga se existe registro OU se a data já passou
-    const isPaid = !!existingInstallment || hasPassedCurrentDate;
+    // Lógica correta:
+    // - Paga: apenas se existe registro no banco de dados
+    // - Vencida: se a data já passou E não existe registro
+    // - A vencer: se a data ainda não passou E não existe registro
+    const isPaid = !!existingInstallment;
     const isOverdue = hasPassedCurrentDate && !existingInstallment;
+    const isPending = !hasPassedCurrentDate && !existingInstallment;
     
     if (isPaid) paidInstallments++;
     if (isOverdue) overdueInstallments++;
+    if (isPending) pendingInstallments++;
+    
+    let status = 'A vencer';
+    if (isPaid) status = 'Paga';
+    else if (isOverdue) status = 'Vencida';
     
     installmentDetails.push({
       number: i + 1,
       date: installmentDate,
       isPaid,
       isOverdue,
+      isPending,
+      status,
       amount: monthlyAmount
     });
   }
-  
-  const pendingInstallments = totalInstallments - paidInstallments;
   
   // Calcular a data da primeira parcela para exibição
   const firstInstallmentDate = new Date(purchaseDate);
@@ -180,7 +190,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
                       ? 'bg-red-200 text-red-800'
                       : 'bg-yellow-200 text-yellow-800'
                 }`}>
-                  {detail.isPaid ? 'Paga' : detail.isOverdue ? 'Vencida' : 'A vencer'}
+                  {detail.status}
                 </span>
               </div>
               <div className="text-sm text-gray-600">
