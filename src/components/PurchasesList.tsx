@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { CreditCard, AlertCircle, Trash2, Edit3 } from 'lucide-react';
+import { CreditCard, AlertCircle, Trash2, Edit3, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { Expense } from '@/types/installments';
+import { generateInstallmentReport } from '@/utils/installmentUtils';
 
 interface PurchasesListProps {
   installmentPurchases: Expense[][];
@@ -15,19 +16,13 @@ interface PurchasesListProps {
 }
 
 const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onDeletePurchase, onUpdatePurchaseDate }) => {
-  // Usar data atual de 2025
-  const currentDate = new Date('2025-06-27');
+  const currentDate = new Date();
   const [editingPurchase, setEditingPurchase] = useState<{ group: Expense[], index: number } | null>(null);
   const [newPurchaseDate, setNewPurchaseDate] = useState('');
 
   const handleEditDate = (purchaseGroup: Expense[], index: number) => {
     const firstInstallment = purchaseGroup[0];
-    let purchaseDate = new Date(firstInstallment.date);
-    
-    // Ajustar data da compra para 2025 se estiver no futuro
-    if (purchaseDate.getFullYear() > 2025) {
-      purchaseDate.setFullYear(2025);
-    }
+    const purchaseDate = new Date(firstInstallment.date);
     
     setNewPurchaseDate(purchaseDate.toISOString().split('T')[0]);
     setEditingPurchase({ group: purchaseGroup, index });
@@ -63,9 +58,12 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
           <CreditCard className="h-5 w-5" />
           Suas Compras Parceladas
         </CardTitle>
+        <p className="text-sm text-gray-600">
+          ℹ️ As parcelas seguem a data de vencimento da fatura do cartão (dia 28), não a data da compra
+        </p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           {installmentPurchases.map((purchaseGroup, index) => {
             const sortedGroup = purchaseGroup.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             const firstInstallment = sortedGroup[0];
@@ -73,175 +71,191 @@ const PurchasesList: React.FC<PurchasesListProps> = ({ installmentPurchases, onD
             const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
             const monthlyAmount = originalAmount / totalInstallments;
             
-            // Calcular quantas parcelas já foram pagas (incluindo as que passaram da data atual)
-            let purchaseDate = new Date(firstInstallment.date);
+            const purchaseDate = new Date(firstInstallment.date);
             
-            // Ajustar data da compra para 2025 se estiver no futuro
-            if (purchaseDate.getFullYear() > 2025) {
-              purchaseDate.setFullYear(2025);
-            }
-            
+            // Calcular parcelas usando a nova lógica
             let paidInstallments = 0;
+            let overdueInstallments = 0;
+            const installmentDetails = [];
             
             for (let i = 0; i < totalInstallments; i++) {
               const installmentDate = new Date(purchaseDate);
-              installmentDate.setMonth(purchaseDate.getMonth() + (i + 1));
-              
-              const targetDay = purchaseDate.getDate();
-              const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
-              
-              if (targetDay > lastDayOfMonth) {
-                installmentDate.setDate(lastDayOfMonth);
-              } else {
-                installmentDate.setDate(targetDay);
-              }
+              installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
+              installmentDate.setDate(28); // Vencimento sempre no dia 28
               
               const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
               const hasPassedCurrentDate = installmentDate <= currentDate;
+              const isPaid = !!existingInstallment || hasPassedCurrentDate;
               
-              if (existingInstallment || hasPassedCurrentDate) {
-                paidInstallments++;
-              }
+              if (isPaid) paidInstallments++;
+              if (hasPassedCurrentDate && !existingInstallment) overdueInstallments++;
+              
+              installmentDetails.push({
+                number: i + 1,
+                date: installmentDate,
+                isPaid,
+                isOverdue: hasPassedCurrentDate && !existingInstallment,
+                amount: monthlyAmount
+              });
             }
             
             const pendingInstallments = totalInstallments - paidInstallments;
             
-            // Calcular a data da primeira parcela: mês seguinte à compra
-            const firstInstallmentDate = new Date(purchaseDate);
-            firstInstallmentDate.setMonth(purchaseDate.getMonth() + 1);
-            
             return (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-start mb-3">
+              <div key={index} className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                {/* Header da Compra */}
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{firstInstallment.description}</h3>
-                    <p className="text-sm text-gray-600">
-                      {firstInstallment.category} • {firstInstallment.paymentMethod}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Compra realizada em: {purchaseDate.toLocaleDateString('pt-BR')}
-                    </p>
-                    <p className="text-sm text-blue-600">
-                      Primeira parcela: {firstInstallmentDate.toLocaleDateString('pt-BR')}
-                    </p>
+                    <h3 className="font-semibold text-xl text-gray-800">{firstInstallment.description}</h3>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Compra: {purchaseDate.toLocaleDateString('pt-BR')}
+                      </span>
+                      <span>{firstInstallment.category}</span>
+                      <span>{firstInstallment.paymentMethod}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <div className="text-xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-blue-600">
                         R$ {originalAmount.toFixed(2)}
                       </div>
                       <div className="text-sm text-gray-600">
                         {totalInstallments}x de R$ {monthlyAmount.toFixed(2)}
                       </div>
                     </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditDate(purchaseGroup, index)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Editar Data da Compra</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="purchase-date">Data da Compra</Label>
-                            <Input
-                              id="purchase-date"
-                              type="date"
-                              value={newPurchaseDate}
-                              onChange={(e) => setNewPurchaseDate(e.target.value)}
-                            />
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditDate(purchaseGroup, index)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Editar Data da Compra</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="purchase-date">Data da Compra</Label>
+                              <Input
+                                id="purchase-date"
+                                type="date"
+                                value={newPurchaseDate}
+                                onChange={(e) => setNewPurchaseDate(e.target.value)}
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setEditingPurchase(null)}>
+                                Cancelar
+                              </Button>
+                              <Button onClick={handleSaveDate}>
+                                Salvar
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setEditingPurchase(null)}>
-                              Cancelar
-                            </Button>
-                            <Button onClick={handleSaveDate}>
-                              Salvar
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDeletePurchase(purchaseGroup, firstInstallment.description)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onDeletePurchase(purchaseGroup, firstInstallment.description)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Explicação da Lógica */}
+                <div className="bg-blue-100 p-3 rounded-lg mb-4">
+                  <h4 className="font-medium text-blue-800 mb-1">📅 Como funcionam as parcelas:</h4>
+                  <p className="text-sm text-blue-700">
+                    As parcelas seguem a data de vencimento da fatura do cartão (dia 28), não a data da compra. 
+                    Compra realizada em {purchaseDate.toLocaleDateString('pt-BR')}, 
+                    primeira parcela vence em {new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, 28).toLocaleDateString('pt-BR')}.
+                  </p>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Pagas: {paidInstallments}</span>
+                {/* Estatísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <div className="font-semibold text-green-800">Pagas: {paidInstallments}</div>
+                      <div className="text-sm text-green-600">R$ {(paidInstallments * monthlyAmount).toFixed(2)}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm">Pendentes: {pendingInstallments}</span>
+                  <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                    <Clock className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <div className="font-semibold text-orange-800">Pendentes: {pendingInstallments}</div>
+                      <div className="text-sm text-orange-600">R$ {(pendingInstallments * monthlyAmount).toFixed(2)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                    <div>
+                      <div className="font-semibold text-red-800">Vencidas: {overdueInstallments}</div>
+                      <div className="text-sm text-red-600">R$ {(overdueInstallments * monthlyAmount).toFixed(2)}</div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Barra de Progresso */}
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
                   <div 
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${(paidInstallments / totalInstallments) * 100}%` }}
                   ></div>
                 </div>
 
-                {/* Próximas Parcelas */}
-                {pendingInstallments > 0 && (
-                  <div className="mt-3">
-                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-orange-500" />
-                      Próximas Parcelas
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {Array.from({ length: Math.min(6, pendingInstallments) }, (_, i) => {
-                        const installmentNumber = paidInstallments + i + 1;
-                        
-                        // Calcular data da parcela: data da compra + número de meses
-                        const installmentDate = new Date(purchaseDate);
-                        installmentDate.setMonth(purchaseDate.getMonth() + installmentNumber);
-                        
-                        // Manter o mesmo dia da compra, ajustando se necessário
-                        const targetDay = purchaseDate.getDate();
-                        const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
-                        
-                        if (targetDay > lastDayOfMonth) {
-                          installmentDate.setDate(lastDayOfMonth);
-                        } else {
-                          installmentDate.setDate(targetDay);
-                        }
-                        
-                        return (
-                          <div key={i} className="text-xs p-2 bg-white rounded border">
-                            <div className="font-medium">
-                              {installmentNumber}/{totalInstallments}
-                            </div>
-                            <div className="text-gray-600">
-                              {installmentDate.toLocaleDateString('pt-BR')}
-                            </div>
-                            <div className="font-semibold text-orange-600">
-                              R$ {monthlyAmount.toFixed(2)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                {/* Detalhamento das Parcelas */}
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-3">Cronograma Detalhado:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {installmentDetails.map((detail, i) => (
+                      <div 
+                        key={i} 
+                        className={`p-3 rounded-lg border-2 ${
+                          detail.isPaid 
+                            ? 'bg-green-50 border-green-200' 
+                            : detail.isOverdue 
+                              ? 'bg-red-50 border-red-200'
+                              : 'bg-yellow-50 border-yellow-200'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold text-sm">
+                            Parcela {detail.number}/{totalInstallments}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            detail.isPaid 
+                              ? 'bg-green-200 text-green-800' 
+                              : detail.isOverdue 
+                                ? 'bg-red-200 text-red-800'
+                                : 'bg-yellow-200 text-yellow-800'
+                          }`}>
+                            {detail.isPaid ? 'Paga' : detail.isOverdue ? 'Vencida' : 'A vencer'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {detail.date.toLocaleDateString('pt-BR')}
+                        </div>
+                        <div className="font-bold text-gray-800">
+                          R$ {detail.amount.toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}

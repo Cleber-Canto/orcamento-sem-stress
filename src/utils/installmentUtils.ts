@@ -1,15 +1,16 @@
 
 import { Expense, EnhancedInstallment } from '@/types/installments';
 
-// Função para calcular a data da primeira parcela baseada na data da compra
-export const calculateFirstInstallmentDate = (purchaseDate: string) => {
+// Função para calcular a data da primeira parcela baseada na data da fatura do cartão
+export const calculateFirstInstallmentDate = (purchaseDate: string, cardDueDay: number = 28) => {
   const purchase = new Date(purchaseDate);
   
   console.log('Data da compra original:', purchase);
   
-  // A primeira parcela será no mês seguinte, mantendo o mesmo dia
+  // A primeira parcela será no próximo vencimento da fatura após a compra
   const firstInstallmentDate = new Date(purchase);
   firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
+  firstInstallmentDate.setDate(cardDueDay); // Dia da fatura (padrão: 28)
   
   console.log('Primeira parcela calculada para:', firstInstallmentDate);
   
@@ -51,7 +52,7 @@ export const groupInstallmentsByPurchase = (expenses: Expense[]) => {
   return grouped;
 };
 
-// Gerar cronograma completo de todas as parcelas
+// Gerar cronograma completo de todas as parcelas seguindo a data da fatura
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
   const currentDate = new Date();
@@ -76,7 +77,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     const originalAmount = firstInstallment.originalAmount || 
                           (firstInstallment.amount * totalInstallments);
     
-    const monthlyAmount = originalAmount / totalInstallments;
+    const monthlyAmount = Number((originalAmount / totalInstallments).toFixed(2));
     
     console.log('Dados do grupo:', {
       description: firstInstallment.description,
@@ -88,21 +89,12 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     // Usar a data da compra como base
     const purchaseDate = new Date(firstInstallment.date);
     
-    // Gerar todas as parcelas do cronograma
+    // Gerar todas as parcelas do cronograma seguindo a data da fatura (dia 28 por padrão)
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela: data da compra + i meses
+      // Calcular a data de cada parcela: data da compra + i+1 meses, sempre no dia 28
       const installmentDate = new Date(purchaseDate);
-      installmentDate.setMonth(purchaseDate.getMonth() + i);
-      
-      // Manter o mesmo dia do mês da compra
-      const targetDay = purchaseDate.getDate();
-      const lastDayOfMonth = new Date(installmentDate.getFullYear(), installmentDate.getMonth() + 1, 0).getDate();
-      
-      if (targetDay > lastDayOfMonth) {
-        installmentDate.setDate(lastDayOfMonth);
-      } else {
-        installmentDate.setDate(targetDay);
-      }
+      installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
+      installmentDate.setDate(28); // Vencimento da fatura sempre no dia 28
       
       // Verificar se esta parcela já foi registrada ou já passou
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
@@ -154,5 +146,42 @@ export const calculateInstallmentStats = (installments: EnhancedInstallment[]) =
     paidAmount,
     pendingAmount,
     completionPercentage: totalInstallments > 0 ? (paidInstallments / totalInstallments) * 100 : 0
+  };
+};
+
+// Função para gerar relatório detalhado de parcelas (como o exemplo solicitado)
+export const generateInstallmentReport = (installments: EnhancedInstallment[], purchaseDate: string) => {
+  const purchase = new Date(purchaseDate);
+  const today = new Date();
+  
+  const paidInstallments = installments.filter(inst => inst.isPaid);
+  const pendingInstallments = installments.filter(inst => !inst.isPaid);
+  const overdueInstallments = pendingInstallments.filter(inst => new Date(inst.date) < today);
+  const upcomingInstallments = pendingInstallments.filter(inst => new Date(inst.date) >= today);
+  
+  return {
+    purchaseInfo: {
+      date: purchase.toLocaleDateString('pt-BR'),
+      totalInstallments: installments.length,
+      description: installments[0]?.description || 'Compra'
+    },
+    paidInstallments: paidInstallments.map(inst => ({
+      number: inst.installmentNumber,
+      amount: inst.amount,
+      dueDate: new Date(inst.date).toLocaleDateString('pt-BR'),
+      status: 'Paga'
+    })),
+    overdueInstallments: overdueInstallments.map(inst => ({
+      number: inst.installmentNumber,
+      amount: inst.amount,
+      dueDate: new Date(inst.date).toLocaleDateString('pt-BR'),
+      status: 'Vencida'
+    })),
+    upcomingInstallments: upcomingInstallments.map(inst => ({
+      number: inst.installmentNumber,
+      amount: inst.amount,
+      dueDate: new Date(inst.date).toLocaleDateString('pt-BR'),
+      status: 'A vencer'
+    }))
   };
 };
