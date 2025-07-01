@@ -86,19 +86,29 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
       monthlyAmount
     });
     
-    // Usar a data da compra como base
+    // Usar a data da compra como base para calcular as parcelas
     const purchaseDate = new Date(firstInstallment.date);
     
     // Gerar todas as parcelas do cronograma seguindo a data da fatura (dia 28 por padrão)
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela: data da compra + i+1 meses, sempre no dia 28
+      // Calcular a data de cada parcela: primeira parcela no mês seguinte da compra, sempre no dia 28
       const installmentDate = new Date(purchaseDate);
       installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
       installmentDate.setDate(28); // Vencimento da fatura sempre no dia 28
       
+      // Corrigir meses que não têm dia 28 (caso específico de fevereiro)
+      if (installmentDate.getDate() !== 28) {
+        installmentDate.setDate(0); // Vai para o último dia do mês anterior
+        installmentDate.setDate(28); // Tenta novamente
+      }
+      
       // Verificar se esta parcela já foi registrada ou já passou
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
       const hasPassedCurrentDate = installmentDate <= currentDate;
+      
+      // Uma parcela está paga se:
+      // 1. Existe um registro desta parcela no banco de dados, OU
+      // 2. A data da parcela já passou da data atual
       const isPaid = !!existingInstallment || hasPassedCurrentDate;
       
       console.log(`Parcela ${i + 1}/${totalInstallments} - Data: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid}`);
@@ -109,7 +119,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         amount: monthlyAmount,
         date: installmentDate.toISOString().split('T')[0],
         isPaid: isPaid,
-        id: `${firstInstallment.id}-${i + 1}`
+        id: Date.now() + Math.random() + i // Gerar ID único numérico
       });
     }
   });

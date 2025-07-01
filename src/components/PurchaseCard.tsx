@@ -28,7 +28,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   
   const purchaseDate = new Date(firstInstallment.date);
   
-  // Calcular parcelas usando a nova lógica
+  // Calcular parcelas usando a nova lógica corrigida
   let paidInstallments = 0;
   let overdueInstallments = 0;
   const installmentDetails = [];
@@ -38,23 +38,37 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     installmentDate.setMonth(purchaseDate.getMonth() + i + 1);
     installmentDate.setDate(28); // Vencimento sempre no dia 28
     
+    // Corrigir meses que não têm dia 28 (fevereiro)
+    if (installmentDate.getDate() !== 28) {
+      installmentDate.setDate(0);
+      installmentDate.setDate(28);
+    }
+    
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate <= currentDate;
+    
+    // Uma parcela está paga se existe registro OU se a data já passou
     const isPaid = !!existingInstallment || hasPassedCurrentDate;
+    const isOverdue = hasPassedCurrentDate && !existingInstallment;
     
     if (isPaid) paidInstallments++;
-    if (hasPassedCurrentDate && !existingInstallment) overdueInstallments++;
+    if (isOverdue) overdueInstallments++;
     
     installmentDetails.push({
       number: i + 1,
       date: installmentDate,
       isPaid,
-      isOverdue: hasPassedCurrentDate && !existingInstallment,
+      isOverdue,
       amount: monthlyAmount
     });
   }
   
   const pendingInstallments = totalInstallments - paidInstallments;
+  
+  // Calcular a data da primeira parcela para exibição
+  const firstInstallmentDate = new Date(purchaseDate);
+  firstInstallmentDate.setMonth(purchaseDate.getMonth() + 1);
+  firstInstallmentDate.setDate(28);
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
@@ -103,7 +117,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
         <p className="text-sm text-blue-700">
           As parcelas seguem a data de vencimento da fatura do cartão (dia 28), não a data da compra. 
           Compra realizada em {purchaseDate.toLocaleDateString('pt-BR')}, 
-          primeira parcela vence em {new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, 28).toLocaleDateString('pt-BR')}.
+          primeira parcela vence em {firstInstallmentDate.toLocaleDateString('pt-BR')}.
         </p>
       </div>
       
