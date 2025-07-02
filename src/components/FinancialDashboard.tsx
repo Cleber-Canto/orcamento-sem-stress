@@ -1,7 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, DollarSign, Wallet, CreditCard, Trash2 } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
 import GoalsSection from './GoalsSection';
@@ -10,6 +8,10 @@ import EducationSection from './EducationSection';
 import IncomeSection from './IncomeSection';
 import InstallmentsSection from './InstallmentsSection';
 import BudgetSection from './BudgetSection';
+import FinancialSummaryCards from './FinancialSummaryCards';
+import RecentExpensesList from './RecentExpensesList';
+import GoalsProgress from './GoalsProgress';
+import NavigationTabs from './NavigationTabs';
 
 interface Goal {
   id: number;
@@ -99,24 +101,6 @@ const FinancialDashboard = () => {
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const remainingBalance = totalIncome - totalExpenses;
 
-  // Análise de parcelas por mês
-  const getInstallmentsByMonth = () => {
-    const installmentExpenses = expenses.filter(expense => expense.isInstallment && expense.installmentNumber && expense.totalInstallments);
-    const installmentsByMonth: { [key: string]: Expense[] } = {};
-    
-    installmentExpenses.forEach(expense => {
-      const expenseDate = new Date(expense.date);
-      const monthKey = `${expenseDate.getFullYear()}-${String(expenseDate.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (!installmentsByMonth[monthKey]) {
-        installmentsByMonth[monthKey] = [];
-      }
-      installmentsByMonth[monthKey].push(expense);
-    });
-    
-    return installmentsByMonth;
-  };
-
   const addExpense = (expense: any) => {
     setExpenses([...expenses, { ...expense, id: Date.now() + Math.random() }]);
   };
@@ -151,158 +135,15 @@ const FinancialDashboard = () => {
       default:
         return (
           <div className="space-y-6">
-            {/* Resumo Financeiro Melhorado */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-green-700">Renda Total</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-800">R$ {totalIncome.toFixed(2)}</div>
-                  {totalExtraIncome > 0 && (
-                    <div className="text-xs text-green-600 mt-1">
-                      Base: R$ {monthlyIncome.toFixed(2)} + Extra: R$ {totalExtraIncome.toFixed(2)}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-red-700">Gastos Totais</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-800">R$ {totalExpenses.toFixed(2)}</div>
-                  <div className="text-xs text-red-600 mt-1">
-                    {totalIncome > 0 ? ((totalExpenses / totalIncome) * 100).toFixed(1) : '0'}% da renda
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className={`bg-gradient-to-br ${remainingBalance >= 0 ? 'from-blue-50 to-blue-100 border-blue-200' : 'from-red-50 to-red-100 border-red-200'}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className={`text-sm font-medium ${remainingBalance >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
-                    Saldo Restante
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${remainingBalance >= 0 ? 'text-blue-800' : 'text-red-800'}`}>
-                    R$ {remainingBalance.toFixed(2)}
-                  </div>
-                  <div className={`text-xs mt-1 ${remainingBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {remainingBalance >= 0 ? 'Sobrou dinheiro' : 'Gastou mais que ganhou'}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-purple-700">Taxa de Poupança</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-purple-800">
-                    {totalIncome > 0 ? ((remainingBalance / totalIncome) * 100).toFixed(1) : '0.0'}%
-                  </div>
-                  <div className="text-xs text-purple-600 mt-1">
-                    {remainingBalance >= totalIncome * 0.2 ? '🎉 Excelente!' : 
-                     remainingBalance >= totalIncome * 0.1 ? '👍 Boa!' : '⚠️ Tente economizar mais'}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Últimas Despesas com opção de deletar */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Últimas Despesas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {expenses.slice(-8).reverse().map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium">{expense.description}</div>
-                        <div className="text-sm text-gray-600 flex items-center gap-2">
-                          <span>{expense.category}</span>
-                          {expense.paymentMethod && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                {expense.paymentMethod === 'Cartão de Crédito' && '💳'}
-                                {expense.paymentMethod === 'Débito Automático' && '🔄'}
-                                {expense.paymentMethod === 'PIX' && '📱'}
-                                {expense.paymentMethod}
-                              </span>
-                            </>
-                          )}
-                          <span>•</span>
-                          <span>{new Date(expense.date).toLocaleDateString()}</span>
-                        </div>
-                        {expense.installmentNumber && expense.totalInstallments && (
-                          <div className="text-xs text-blue-600 mt-1">
-                            Parcela {expense.installmentNumber}/{expense.totalInstallments}
-                          </div>
-                        )}
-                        {expense.notes && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {expense.notes}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="font-bold text-red-600">
-                          -R$ {expense.amount.toFixed(2)}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteExpense(expense.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Progresso das Metas */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Suas Metas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {goals.map((goal) => (
-                    <div key={goal.id} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{goal.name}</span>
-                        <span className="text-sm text-gray-600">
-                          R$ {goal.current.toFixed(2)} / R$ {goal.target.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full ${goal.type === 'save' ? 'bg-green-500' : 'bg-blue-500'}`}
-                          style={{ width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {((goal.current / goal.target) * 100).toFixed(1)}% concluído
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <FinancialSummaryCards
+              totalIncome={totalIncome}
+              monthlyIncome={monthlyIncome}
+              totalExtraIncome={totalExtraIncome}
+              totalExpenses={totalExpenses}
+              remainingBalance={remainingBalance}
+            />
+            <RecentExpensesList expenses={expenses} onDeleteExpense={deleteExpense} />
+            <GoalsProgress goals={goals} />
           </div>
         );
     }
@@ -316,83 +157,7 @@ const FinancialDashboard = () => {
           <p className="text-gray-600">Organize suas finanças e alcance seus objetivos</p>
         </div>
 
-        {/* Navegação */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Button
-            variant={activeTab === 'dashboard' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2"
-          >
-            <TrendingUp className="h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button
-            variant={activeTab === 'income' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('income')}
-            className="flex items-center gap-2"
-          >
-            <Wallet className="h-4 w-4" />
-            Renda
-          </Button>
-          <Button
-            variant={activeTab === 'add' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('add')}
-            className="flex items-center gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Adicionar Gasto
-          </Button>
-          <Button
-            variant={activeTab === 'budget' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('budget')}
-            className="flex items-center gap-2"
-          >
-            <Target className="h-4 w-4" />
-            Orçamento
-          </Button>
-          <Button
-            variant={activeTab === 'installments' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('installments')}
-            className="flex items-center gap-2"
-          >
-            <CreditCard className="h-4 w-4" />
-            Parcelas
-          </Button>
-          <Button
-            variant={activeTab === 'charts' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('charts')}
-            className="flex items-center gap-2"
-          >
-            <TrendingUp className="h-4 w-4" />
-            Gráficos
-          </Button>
-          <Button
-            variant={activeTab === 'goals' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('goals')}
-            className="flex items-center gap-2"
-          >
-            <Target className="h-4 w-4" />
-            Metas
-          </Button>
-          <Button
-            variant={activeTab === 'alerts' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('alerts')}
-            className="flex items-center gap-2"
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Alertas
-          </Button>
-          <Button
-            variant={activeTab === 'education' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('education')}
-            className="flex items-center gap-2"
-          >
-            <BookOpen className="h-4 w-4" />
-            Educação
-          </Button>
-        </div>
-
-        {/* Conteúdo */}
+        <NavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
         {renderTabContent()}
       </div>
     </div>
