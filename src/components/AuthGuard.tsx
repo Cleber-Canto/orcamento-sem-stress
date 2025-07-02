@@ -1,9 +1,9 @@
 
-import React from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import React, { useState } from 'react';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import { Shield, DollarSign, TrendingUp, AlertCircle, UserPlus, LogIn } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -11,6 +11,7 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Se a chave do Clerk não estiver configurada, mostra a aplicação com um aviso
   if (!publishableKey) {
@@ -48,7 +49,10 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
                     Controle Financeiro Inteligente
                   </CardTitle>
                   <p className="text-gray-600 mt-2">
-                    Faça login para acessar suas finanças de forma segura
+                    {isRegistering 
+                      ? 'Crie sua conta para começar a organizar suas finanças' 
+                      : 'Faça login para acessar suas finanças de forma segura'
+                    }
                   </p>
                 </div>
               </CardHeader>
@@ -74,15 +78,60 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
                   </div>
                 </div>
                 
-                <SignInButton mode="modal" fallbackRedirectUrl="/">
-                  <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium py-3">
-                    Entrar com Segurança
-                  </Button>
-                </SignInButton>
+                {isRegistering ? (
+                  <div className="space-y-4">
+                    <SignUpButton mode="modal" fallbackRedirectUrl="/">
+                      <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium py-3">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Criar Conta Gratuita
+                      </Button>
+                    </SignUpButton>
+                    
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">
+                        Já tem uma conta?{' '}
+                        <button 
+                          onClick={() => setIsRegistering(false)}
+                          className="text-blue-600 hover:text-blue-700 font-medium underline"
+                        >
+                          Fazer Login
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <SignInButton mode="modal" fallbackRedirectUrl="/">
+                      <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium py-3">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Entrar com Segurança
+                      </Button>
+                    </SignInButton>
+                    
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">
+                        Não tem uma conta?{' '}
+                        <button 
+                          onClick={() => setIsRegistering(true)}
+                          className="text-blue-600 hover:text-blue-700 font-medium underline"
+                        >
+                          Criar Conta Gratuita
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
-                <p className="text-xs text-center text-gray-500">
-                  Seus dados são protegidos com criptografia de ponta
-                </p>
+                <div className="text-center space-y-2">
+                  <p className="text-xs text-gray-500">
+                    Seus dados são protegidos com criptografia de ponta
+                  </p>
+                  <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
+                    <span>✓ Dados Seguros</span>
+                    <span>✓ Gratuito</span>
+                    <span>✓ Sem Anúncios</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
