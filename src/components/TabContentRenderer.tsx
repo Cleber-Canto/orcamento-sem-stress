@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
@@ -10,6 +9,7 @@ import InstallmentsSection from './InstallmentsSection';
 import BudgetSection from './BudgetSection';
 import CreditCardBilling from './CreditCardBilling';
 import DashboardContent from './DashboardContent';
+import PurchaseHistoryTable from './PurchaseHistoryTable';
 import { Goal, Income, Expense } from '@/types/financial';
 
 interface TabContentRendererProps {
@@ -66,7 +66,17 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
         />
       );
     case 'installments':
-      return <InstallmentsSection expenses={expenses} onDeleteExpense={onDeleteExpense} />;
+      return (
+        <div className="space-y-6">
+          <InstallmentsSection
+            expenses={expenses}
+            onDeleteExpense={onDeleteExpense}
+          />
+          <PurchaseHistoryTable 
+            installmentPurchases={installmentPurchases} 
+          />
+        </div>
+      );
     case 'budget':
       return <BudgetSection expenses={expenses} monthlyIncome={totalIncome} />;
     case 'credit-card':

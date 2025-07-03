@@ -1,15 +1,15 @@
 
-// Função para calcular a data da primeira parcela baseada na data da compra
-export const calculateFirstInstallmentDate = (purchaseDate: string) => {
-  const purchase = new Date(purchaseDate);
+import { addMonths, parseISO } from 'date-fns';
+
+/**
+ * Calcula a data da primeira parcela baseada na data da compra
+ * A primeira parcela vence no mesmo dia da compra
+ * @param purchaseDate Data da compra original
+ * @returns Data da primeira parcela
+ */
+export const calculateFirstInstallmentDate = (purchaseDate: string): Date => {
+  const purchase = parseISO(purchaseDate);
   
-  console.log('Data da compra original:', purchase);
-  
-  // A primeira parcela vence no mês seguinte, mantendo o mesmo dia
-  const firstInstallmentDate = new Date(purchase);
-  firstInstallmentDate.setMonth(firstInstallmentDate.getMonth() + 1);
-  
-  console.log('Primeira parcela calculada para:', firstInstallmentDate);
-  
-  return firstInstallmentDate;
+  // A primeira parcela vence no mesmo dia da compra (não no mês seguinte)
+  return purchase;
 };

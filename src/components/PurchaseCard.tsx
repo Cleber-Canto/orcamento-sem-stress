@@ -36,7 +36,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   let pendingInstallments = 0;
   const installmentDetails = [];
   
-  // Calcular a primeira parcela (mês seguinte, mesmo dia)
+  // A primeira parcela vence no mesmo dia da compra (não no mês seguinte)
   const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
   
   for (let i = 0; i < totalInstallments; i++) {
