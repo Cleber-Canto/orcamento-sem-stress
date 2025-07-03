@@ -8,7 +8,7 @@ import LoginForm from './auth/LoginForm';
 import RegisterForm from './auth/RegisterForm';
 
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login, register } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
 
   if (isLoading) {
@@ -59,9 +59,15 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </CardHeader>
           <CardContent className="space-y-6">
             {showRegister ? (
-              <RegisterForm onSwitchToLogin={() => setShowRegister(false)} />
+              <RegisterForm 
+                onRegister={register}
+                onSwitchToLogin={() => setShowRegister(false)} 
+              />
             ) : (
-              <LoginForm onSwitchToRegister={() => setShowRegister(true)} />
+              <LoginForm 
+                onLogin={login}
+                onSwitchToRegister={() => setShowRegister(true)} 
+              />
             )}
 
             <div className="text-center pt-4 border-t border-gray-100">
