@@ -23,38 +23,23 @@ const CreditCardConfig: React.FC<CreditCardConfigProps> = ({
         <h4 className="font-medium text-purple-800">Configurações do Cartão de Crédito</h4>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="cutoff">Dia do Corte</Label>
-          <Select value={creditCardCutoff} onValueChange={setCreditCardCutoff}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                <SelectItem key={day} value={day.toString()}>
-                  Dia {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="dueDay">Dia do Vencimento</Label>
-          <Select value={creditCardDueDay} onValueChange={setCreditCardDueDay}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                <SelectItem key={day} value={day.toString()}>
-                  Dia {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="cutoff">Dia do Corte</Label>
+        <Select value={creditCardCutoff} onValueChange={setCreditCardCutoff}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+              <SelectItem key={day} value={day.toString()}>
+                Dia {day}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-purple-600">
+          💡 O vencimento será no mesmo dia da compra, no mês correto da fatura
+        </p>
       </div>
 
       {date && (
@@ -64,7 +49,7 @@ const CreditCardConfig: React.FC<CreditCardConfigProps> = ({
           </p>
           <p className="text-sm text-purple-700">
             Compra em {new Date(date).toLocaleDateString()} → 
-            Vence em {new Date(calculateDueDate(date, parseInt(creditCardCutoff), parseInt(creditCardDueDay))).toLocaleDateString()}
+            Vence em {new Date(calculateDueDate(date, parseInt(creditCardCutoff), 0)).toLocaleDateString()}
           </p>
         </div>
       )}
