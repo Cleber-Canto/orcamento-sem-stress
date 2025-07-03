@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, CreditCard, Calendar, Repeat, Building } from 'lucide-react';
+import { PlusCircle, CreditCard, Calendar, Repeat, Building, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { calculateDueDate, calculateInstallmentDueDates } from '@/utils/creditCardUtils';
 
 interface ExpenseFormProps {
   onAddExpense: (expense: any) => void;
@@ -25,6 +25,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState('');
   const [notes, setNotes] = useState('');
+  
+  // Configurações do cartão de crédito
+  const [creditCardCutoff, setCreditCardCutoff] = useState('10');
+  const [creditCardDueDay, setCreditCardDueDay] = useState('25');
+  const [showCreditCardConfig, setShowCreditCardConfig] = useState(false);
+  
   const { toast } = useToast();
 
   const categories = [
@@ -94,42 +100,108 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
       isRecurring,
       recurringFrequency: isRecurring ? recurringFrequency : '',
       notes,
+      // Configurações do cartão
+      creditCardCutoff: paymentMethod === 'Cartão de Crédito' ? parseInt(creditCardCutoff) : undefined,
+      creditCardDueDay: paymentMethod === 'Cartão de Crédito' ? parseInt(creditCardDueDay) : undefined,
     };
 
-    // Se for parcelado, criar múltiplas despesas
-    if (isInstallment && parseInt(installments) > 1) {
-      const installmentAmount = parseFloat(amount) / parseInt(installments);
-      const originalAmount = parseFloat(amount);
+    // Se for cartão de crédito, calcular data de vencimento
+    if (paymentMethod === 'Cartão de Crédito') {
+      const cutoff = parseInt(creditCardCutoff);
+      const dueDay = parseInt(creditCardDueDay);
       
-      for (let i = 0; i < parseInt(installments); i++) {
-        const installmentDate = new Date(date);
-        installmentDate.setMonth(installmentDate.getMonth() + i);
+      if (isInstallment && parseInt(installments) > 1) {
+        const installmentAmount = parseFloat(amount) / parseInt(installments);
+        const originalAmount = parseFloat(amount);
         
-        const installmentExpense = {
+        // Calcular todas as datas de vencimento
+        const dueDates = calculateInstallmentDueDates(date, parseInt(installments), cutoff, dueDay);
+        
+        for (let i = 0; i < parseInt(installments); i++) {
+          const installmentDate = new Date(date);
+          installmentDate.setMonth(installmentDate.getMonth() + i);
+          
+          const installmentExpense = {
+            ...baseExpense,
+            description: `${description}`,
+            amount: installmentAmount,
+            date: installmentDate.toISOString().split('T')[0],
+            installmentNumber: i + 1,
+            totalInstallments: parseInt(installments),
+            originalAmount: originalAmount,
+            isInstallment: true,
+            dueDate: dueDates[i], // Data de vencimento calculada
+            billingInfo: {
+              cutoffDay: cutoff,
+              dueDay: dueDay,
+              billingMonth: dueDates[i].substring(0, 7) // yyyy-MM
+            }
+          };
+          
+          onAddExpense(installmentExpense);
+        }
+        
+        toast({
+          title: "Compra parcelada no cartão cadastrada!",
+          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
+        });
+      } else {
+        // Compra à vista no cartão
+        const dueDate = calculateDueDate(date, cutoff, dueDay);
+        
+        const creditCardExpense = {
           ...baseExpense,
-          description: `${description}`,
-          amount: installmentAmount,
-          date: installmentDate.toISOString().split('T')[0],
-          installmentNumber: i + 1,
-          totalInstallments: parseInt(installments),
-          originalAmount: originalAmount, // Salvar o valor total original
-          isInstallment: true
+          dueDate,
+          billingInfo: {
+            cutoffDay: cutoff,
+            dueDay: dueDay,
+            billingMonth: dueDate.substring(0, 7)
+          }
         };
         
-        onAddExpense(installmentExpense);
+        onAddExpense(creditCardExpense);
+        
+        toast({
+          title: "Compra no cartão cadastrada!",
+          description: `${description} - Vencimento: ${new Date(dueDate).toLocaleDateString()}`,
+        });
       }
-      
-      toast({
-        title: "Compra parcelada cadastrada!",
-        description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
-      });
     } else {
-      onAddExpense(baseExpense);
-      
-      toast({
-        title: "Despesa adicionada!",
-        description: `${description} - R$ ${amount}`,
-      });
+      // Outros métodos de pagamento (lógica original)
+      if (isInstallment && parseInt(installments) > 1) {
+        const installmentAmount = parseFloat(amount) / parseInt(installments);
+        const originalAmount = parseFloat(amount);
+        
+        for (let i = 0; i < parseInt(installments); i++) {
+          const installmentDate = new Date(date);
+          installmentDate.setMonth(installmentDate.getMonth() + i);
+          
+          const installmentExpense = {
+            ...baseExpense,
+            description: `${description}`,
+            amount: installmentAmount,
+            date: installmentDate.toISOString().split('T')[0],
+            installmentNumber: i + 1,
+            totalInstallments: parseInt(installments),
+            originalAmount: originalAmount,
+            isInstallment: true
+          };
+          
+          onAddExpense(installmentExpense);
+        }
+        
+        toast({
+          title: "Compra parcelada cadastrada!",
+          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
+        });
+      } else {
+        onAddExpense(baseExpense);
+        
+        toast({
+          title: "Despesa adicionada!",
+          description: `${description} - R$ ${amount}`,
+        });
+      }
     }
 
     // Reset form
@@ -143,7 +215,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
     setIsRecurring(false);
     setRecurringFrequency('');
     setNotes('');
+    setShowCreditCardConfig(false);
   };
+
+  // Mostrar configurações do cartão quando selecionado
+  React.useEffect(() => {
+    setShowCreditCardConfig(paymentMethod === 'Cartão de Crédito');
+  }, [paymentMethod]);
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -228,6 +306,62 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
             />
           </div>
 
+          {/* Configurações do Cartão de Crédito */}
+          {showCreditCardConfig && (
+            <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-2 mb-3">
+                <CalendarDays className="h-5 w-5 text-purple-600" />
+                <h4 className="font-medium text-purple-800">Configurações do Cartão de Crédito</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cutoff">Dia do Corte</Label>
+                  <Select value={creditCardCutoff} onValueChange={setCreditCardCutoff}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <SelectItem key={day} value={day.toString()}>
+                          Dia {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dueDay">Dia do Vencimento</Label>
+                  <Select value={creditCardDueDay} onValueChange={setCreditCardDueDay}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <SelectItem key={day} value={day.toString()}>
+                          Dia {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {date && (
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <p className="text-sm font-medium text-purple-800 mb-1">
+                    📅 Preview do Vencimento:
+                  </p>
+                  <p className="text-sm text-purple-700">
+                    Compra em {new Date(date).toLocaleDateString()} → 
+                    Vence em {new Date(calculateDueDate(date, parseInt(creditCardCutoff), parseInt(creditCardDueDay))).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Opções de Parcelamento */}
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center space-x-2">
@@ -238,7 +372,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
               />
               <Label htmlFor="installment" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                Compra Parcelada (Cartão de Crédito)
+                Compra Parcelada
               </Label>
             </div>
             
@@ -251,7 +385,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
                   <p className="text-xs text-blue-700">
                     • O valor será dividido igualmente entre as parcelas<br/>
                     • Cada parcela será lançada nos próximos meses automaticamente<br/>
-                    • Você pode acompanhar o cronograma na aba "Parcelas"
+                    • Para cartão de crédito, as datas de vencimento seguem o corte configurado
                   </p>
                 </div>
                 

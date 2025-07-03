@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
@@ -8,6 +7,7 @@ import EducationSection from './EducationSection';
 import IncomeSection from './IncomeSection';
 import InstallmentsSection from './InstallmentsSection';
 import BudgetSection from './BudgetSection';
+import CreditCardBilling from './CreditCardBilling';
 import FinancialSummaryCards from './FinancialSummaryCards';
 import RecentExpensesList from './RecentExpensesList';
 import GoalsProgress from './GoalsProgress';
@@ -44,6 +44,12 @@ interface Expense {
   isRecurring?: boolean;
   recurringFrequency?: string;
   notes?: string;
+  dueDate?: string;
+  billingInfo?: {
+    cutoffDay: number;
+    dueDay: number;
+    billingMonth: string;
+  };
 }
 
 const FinancialDashboard = () => {
@@ -132,6 +138,8 @@ const FinancialDashboard = () => {
         return <InstallmentsSection expenses={expenses} onDeleteExpense={deleteExpense} />;
       case 'budget':
         return <BudgetSection expenses={expenses} monthlyIncome={totalIncome} />;
+      case 'credit-card':
+        return <CreditCardBilling expenses={expenses} />;
       default:
         return (
           <div className="space-y-6">
