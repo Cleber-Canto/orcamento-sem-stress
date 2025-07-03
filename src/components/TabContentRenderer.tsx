@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ExpenseForm from './ExpenseForm';
 import ExpenseChart from './ExpenseChart';
@@ -11,6 +12,7 @@ import CreditCardBilling from './CreditCardBilling';
 import DashboardContent from './DashboardContent';
 import PurchaseHistoryTable from './PurchaseHistoryTable';
 import { Goal, Income, Expense } from '@/types/financial';
+import { groupInstallmentsByPurchase } from '@/utils/installmentUtils';
 
 interface TabContentRendererProps {
   activeTab: string;
@@ -45,6 +47,10 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
   onSetMonthlyIncome,
   onSetIncomes
 }) => {
+  // Processar dados de parcelas para o histórico
+  const installmentGroups = groupInstallmentsByPurchase(expenses);
+  const installmentPurchases = Object.values(installmentGroups);
+
   switch (activeTab) {
     case 'add':
       return <ExpenseForm onAddExpense={onAddExpense} />;
