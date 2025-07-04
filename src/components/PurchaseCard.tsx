@@ -28,23 +28,25 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  console.log('=== ANÁLISE DA COMPRA (NOVA LÓGICA) ===');
+  console.log('=== ANÁLISE DA COMPRA (CORRIGINDO DATA) ===');
   console.log('Descrição:', firstInstallment.description);
-  console.log('Data EXATA inserida pelo usuário:', firstInstallment.date);
+  console.log('Data ORIGINAL da compra:', firstInstallment.date);
   console.log('Valor original:', originalAmount);
   console.log('Total de parcelas:', totalInstallments);
   console.log('Valor mensal:', monthlyAmount);
   
-  // Usar a data EXATA inserida pelo usuário
-  const purchaseDate = new Date(firstInstallment.date + 'T00:00:00');
+  // Usar a data EXATA da compra sem alterações
+  const purchaseDateString = firstInstallment.date;
+  const purchaseDate = new Date(purchaseDateString + 'T00:00:00');
   console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Data original string:', purchaseDateString);
   
-  // Calcular a primeira parcela (mês seguinte, mesmo dia)
-  const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
-  console.log('Primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
+  // Calcular a primeira parcela usando a data correta
+  const firstInstallmentDate = calculateFirstInstallmentDate(purchaseDateString);
+  console.log('Primeira parcela calculada:', firstInstallmentDate.toLocaleDateString('pt-BR'));
   
   // Calcular todas as datas de parcelas
-  const allInstallmentDates = calculateAllInstallmentDates(firstInstallment.date, totalInstallments);
+  const allInstallmentDates = calculateAllInstallmentDates(purchaseDateString, totalInstallments);
   
   // Calcular status das parcelas
   let paidInstallments = 0;
@@ -83,7 +85,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     });
   }
 
-  console.log('=== RESUMO FINAL (NOVA LÓGICA) ===');
+  console.log('=== RESUMO FINAL (DATA CORRIGIDA) ===');
   console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
   console.log('Primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
   console.log('Parcelas pagas:', paidInstallments);
