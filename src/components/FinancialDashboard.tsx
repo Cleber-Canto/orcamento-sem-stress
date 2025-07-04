@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import NavigationTabs from './NavigationTabs';
 import TabContentRenderer from './TabContentRenderer';
+import UserHeader from './UserHeader';
 import { useFinancialData } from '@/hooks/useFinancialData';
 
 const FinancialDashboard = () => {
@@ -26,6 +27,8 @@ const FinancialDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <div className="container mx-auto p-4 max-w-6xl">
+        <UserHeader />
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Controle Financeiro Inteligente</h1>
           <p className="text-gray-600">Organize suas finanças e alcance seus objetivos</p>
