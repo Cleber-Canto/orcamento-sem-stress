@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Label } from '@/components/ui/label';
 import { CalendarIcon, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { calcularPrimeiraParcela, formatoPersonalizado } from '@/utils/dateCalculations';
 
 interface DatePickerWithConfirmationProps {
   date: string;
@@ -50,6 +50,20 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
     return date.toLocaleDateString('pt-BR');
   };
 
+  const getPreviewInfo = () => {
+    if (!selectedDate) return null;
+    
+    const formattedDateString = selectedDate.toISOString().split('T')[0];
+    const primeiraParcela = calcularPrimeiraParcela(formattedDateString);
+    
+    return {
+      dataCompra: formatoPersonalizado(selectedDate),
+      primeiraParcela: formatoPersonalizado(primeiraParcela)
+    };
+  };
+
+  const previewInfo = getPreviewInfo();
+
   return (
     <div className="space-y-3">
       <Label htmlFor="date">Data da Compra *</Label>
@@ -87,24 +101,19 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
               disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
             />
             
-            {selectedDate && (
+            {selectedDate && previewInfo && (
               <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm font-medium text-blue-800 mb-2">
-                  📅 Data selecionada:
+                  📅 Preview do Vencimento:
                 </p>
                 <p className="text-sm text-blue-700 mb-3">
-                  {selectedDate.toLocaleDateString('pt-BR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  <strong>Compra em {previewInfo.dataCompra} → Primeira parcela vence em {previewInfo.primeiraParcela}</strong>
                 </p>
                 
                 <div className="text-xs text-blue-600 mb-3">
-                  <p>• Esta será a data base para calcular as parcelas</p>
-                  <p>• A primeira parcela vence no mesmo dia do mês seguinte</p>
-                  <p>• Exemplo: Compra em {selectedDate.getDate()}/{selectedDate.getMonth() + 1} → 1ª parcela {selectedDate.getDate()}/{selectedDate.getMonth() + 2}</p>
+                  <p>✅ <strong>Regra correta:</strong> A primeira parcela vence no mesmo dia, mas no MÊS SEGUINTE</p>
+                  <p>• Compra em {selectedDate.getDate()}/{selectedDate.getMonth() + 1} → 1ª parcela {selectedDate.getDate()}/{selectedDate.getMonth() + 2}</p>
+                  <p>• As demais parcelas seguem mensalmente no mesmo dia</p>
                 </div>
                 
                 <Button 
@@ -113,7 +122,7 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
                   size="sm"
                 >
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Confirmar Data
+                  Confirmar Data da Compra
                 </Button>
               </div>
             )}
@@ -128,7 +137,7 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
             <span className="text-sm font-medium">Data da compra confirmada!</span>
           </div>
           <p className="text-xs text-green-700 mt-1">
-            {formatDateForDisplay(date)} - As parcelas serão calculadas a partir desta data
+            {formatDateForDisplay(date)} - As parcelas serão calculadas corretamente a partir desta data
           </p>
         </div>
       )}

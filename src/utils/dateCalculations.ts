@@ -28,6 +28,28 @@ export const formatoPersonalizado = (data: Date): string => {
 };
 
 /**
+ * Calcula a primeira parcela que vence no mês seguinte, mesmo dia
+ * @param dataCompra Data da compra (string YYYY-MM-DD)
+ * @returns Data da primeira parcela
+ */
+export const calcularPrimeiraParcela = (dataCompra: string): Date => {
+  console.log('=== CALCULANDO PRIMEIRA PARCELA CORRETA ===');
+  console.log('📅 Data da compra string:', dataCompra);
+  
+  const dataCompraObj = new Date(dataCompra + 'T00:00:00');
+  console.log('📅 Data da compra parseada:', dataCompraObj.toLocaleDateString('pt-BR'));
+  
+  // A primeira parcela vence no MESMO DIA do MÊS SEGUINTE
+  const primeiraParcela = new Date(dataCompraObj);
+  primeiraParcela.setMonth(primeiraParcela.getMonth() + 1);
+  
+  console.log('📅 Primeira parcela calculada:', primeiraParcela.toLocaleDateString('pt-BR'));
+  console.log('📅 Lógica: Compra em', dataCompraObj.getDate() + '/' + (dataCompraObj.getMonth() + 1), '→ Primeira parcela', primeiraParcela.getDate() + '/' + (primeiraParcela.getMonth() + 1));
+  
+  return primeiraParcela;
+};
+
+/**
  * Valida e confirma uma data de compra
  * @param dataCompra String da data de compra no formato YYYY-MM-DD
  * @returns Objeto com informações da data validada
@@ -42,8 +64,8 @@ export const confirmarDataCompra = (dataCompra: string) => {
   console.log('📅 Data parseada:', data.toLocaleDateString('pt-BR'));
   console.log('📅 Data atual:', hoje.toLocaleDateString('pt-BR'));
   
-  const primeiraParcelaData = new Date(data);
-  primeiraParcelaData.setMonth(primeiraParcelaData.getMonth() + 1);
+  // Usar a nova função que calcula corretamente
+  const primeiraParcelaData = calcularPrimeiraParcela(dataCompra);
   
   console.log('📅 Primeira parcela será em:', primeiraParcelaData.toLocaleDateString('pt-BR'));
   
