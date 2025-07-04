@@ -48,11 +48,16 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
       return;
     }
 
+    console.log('=== FORMULÁRIO DE DESPESA ===');
+    console.log('Data inserida pelo usuário:', date);
+    console.log('Descrição:', description);
+    console.log('Parcelas:', isInstallment ? installments : '1');
+
     const baseExpense = {
       description,
       amount: parseFloat(amount),
       category,
-      date,
+      date, // Manter a data exata inserida pelo usuário
       paymentMethod,
       isInstallment,
       installments: isInstallment ? parseInt(installments) : 1,
@@ -76,14 +81,22 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         const dueDates = calculateInstallmentDueDates(date, parseInt(installments), cutoff, dueDay);
         
         for (let i = 0; i < parseInt(installments); i++) {
-          const installmentDate = new Date(date);
-          installmentDate.setMonth(installmentDate.getMonth() + i);
+          // Usar a data original como base e adicionar meses
+          const baseDate = new Date(date);
+          const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
+          
+          console.log(`Criando parcela ${i + 1}:`, {
+            dataOriginal: date,
+            dataCalculada: installmentDate.toISOString().split('T')[0],
+            mes: installmentDate.getMonth() + 1,
+            ano: installmentDate.getFullYear()
+          });
           
           const installmentExpense = {
             ...baseExpense,
             description: `${description}`,
             amount: installmentAmount,
-            date: installmentDate.toISOString().split('T')[0],
+            date: installmentDate.toISOString().split('T')[0], // Preservar formato YYYY-MM-DD
             installmentNumber: i + 1,
             totalInstallments: parseInt(installments),
             originalAmount: originalAmount,
@@ -101,7 +114,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         
         toast({
           title: "Compra parcelada no cartão cadastrada!",
-          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
+          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${new Date(date).toLocaleDateString('pt-BR')}`,
         });
       } else {
         // Compra à vista no cartão
@@ -121,7 +134,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         
         toast({
           title: "Compra no cartão cadastrada!",
-          description: `${description} - Vencimento: ${new Date(dueDate).toLocaleDateString()}`,
+          description: `${description} - Vencimento: ${new Date(dueDate).toLocaleDateString('pt-BR')}`,
         });
       }
     } else {
@@ -131,14 +144,20 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         const originalAmount = parseFloat(amount);
         
         for (let i = 0; i < parseInt(installments); i++) {
-          const installmentDate = new Date(date);
-          installmentDate.setMonth(installmentDate.getMonth() + i);
+          // Usar a data original como base e adicionar meses sequencialmente
+          const baseDate = new Date(date);
+          const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
+          
+          console.log(`Criando parcela ${i + 1} para outros métodos:`, {
+            dataOriginal: date,
+            dataCalculada: installmentDate.toISOString().split('T')[0]
+          });
           
           const installmentExpense = {
             ...baseExpense,
             description: `${description}`,
             amount: installmentAmount,
-            date: installmentDate.toISOString().split('T')[0],
+            date: installmentDate.toISOString().split('T')[0], // Manter formato correto
             installmentNumber: i + 1,
             totalInstallments: parseInt(installments),
             originalAmount: originalAmount,
@@ -150,7 +169,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
         
         toast({
           title: "Compra parcelada cadastrada!",
-          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)}`,
+          description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${new Date(date).toLocaleDateString('pt-BR')}`,
         });
       } else {
         onAddExpense(baseExpense);
@@ -188,6 +207,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
           <PlusCircle className="h-5 w-5" />
           Cadastrar Nova Despesa
         </CardTitle>
+        <p className="text-sm text-gray-600">
+          💡 <strong>Dica:</strong> A data que você escolher será usada como base para calcular todas as parcelas.
+          <br />
+          <strong>Exemplo:</strong> Data 20/05/2025 → Parcelas em 20/05, 20/06, 20/07, etc.
+        </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
