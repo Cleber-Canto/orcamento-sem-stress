@@ -21,9 +21,9 @@ export const useAuth = () => {
 
   useEffect(() => {
     const initializeAuth = () => {
-      console.log('Inicializando autenticação...');
+      console.log('🔄 Inicializando sistema de autenticação...');
       
-      // Usuários demo pré-definidos
+      // Criar usuários demo se não existirem
       const demoUsers = [
         {
           id: '1',
@@ -41,37 +41,38 @@ export const useAuth = () => {
         }
       ];
 
-      // Garantir que os usuários demo estejam sempre disponíveis
+      // Garantir que usuários demo existam
       const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
       if (existingUsers.length === 0) {
         localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
+        console.log('✅ Usuários demo criados');
       }
 
-      // Verificar se há usuário salvo
+      // Verificar se existe usuário logado
       const savedUser = localStorage.getItem('demoUser');
-      console.log('Usuário salvo encontrado:', !!savedUser);
       
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser);
-          console.log('Usuário carregado:', user.email);
+          console.log('👤 Usuário encontrado:', user.email);
           setAuthState({ user, isLoading: false });
         } catch (error) {
-          console.log('Erro ao carregar usuário, fazendo logout');
+          console.log('❌ Erro ao carregar usuário, limpando dados');
           localStorage.removeItem('demoUser');
           setAuthState({ user: null, isLoading: false });
         }
       } else {
-        console.log('Nenhum usuário salvo, mostrando login');
+        console.log('🔓 Nenhum usuário logado - mostrando tela de login');
         setAuthState({ user: null, isLoading: false });
       }
     };
 
-    initializeAuth();
+    // Simular carregamento para mostrar melhor UX
+    setTimeout(initializeAuth, 800);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('Tentativa de login para:', email);
+    console.log('🔐 Tentativa de login:', email);
     
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -85,16 +86,16 @@ export const useAuth = () => {
       
       localStorage.setItem('demoUser', JSON.stringify(userToSave));
       setAuthState({ user: userToSave, isLoading: false });
-      console.log('Login realizado com sucesso');
+      console.log('✅ Login realizado com sucesso para:', email);
       return true;
     }
     
-    console.log('Credenciais inválidas');
+    console.log('❌ Credenciais inválidas para:', email);
     return false;
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    console.log('Tentativa de registro para:', email);
+    console.log('📝 Tentativa de cadastro:', email);
     
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -103,7 +104,7 @@ export const useAuth = () => {
     
     // Verificar se email já existe
     if (savedUsers.some((u: any) => u.email === email)) {
-      console.log('Email já existe');
+      console.log('❌ Email já existe:', email);
       return false;
     }
     
@@ -115,30 +116,29 @@ export const useAuth = () => {
       createdAt: new Date().toISOString(),
     };
     
-    // Salvar usuário na lista
+    // Salvar novo usuário
     savedUsers.push(newUser);
     localStorage.setItem('demoUsers', JSON.stringify(savedUsers));
     
-    // Login automático após registro
+    // Login automático após cadastro
     const userToSave = { ...newUser };
     delete userToSave.password;
     
     localStorage.setItem('demoUser', JSON.stringify(userToSave));
     setAuthState({ user: userToSave, isLoading: false });
-    console.log('Registro realizado com sucesso');
+    console.log('✅ Cadastro realizado com sucesso:', email);
     
     return true;
   };
 
   const logout = () => {
-    console.log('Fazendo logout...');
+    console.log('🚪 Fazendo logout...');
     localStorage.removeItem('demoUser');
     setAuthState({ user: null, isLoading: false });
   };
 
-  // Função para forçar logout (útil para debugging)
   const forceLogout = () => {
-    console.log('Forçando logout...');
+    console.log('🧹 Limpando todos os dados...');
     localStorage.clear();
     setAuthState({ user: null, isLoading: false });
   };
