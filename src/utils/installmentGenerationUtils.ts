@@ -2,12 +2,12 @@
 import { Expense, EnhancedInstallment } from '@/types/installments';
 import { calculateAllInstallmentDates } from './dateUtils';
 
-// Gerar cronograma completo de todas as parcelas seguindo a nova lógica CORRIGIDA
+// Gerar cronograma completo de todas as parcelas usando a data EXATA da compra
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
   const currentDate = new Date();
   
-  console.log('=== NOVA LÓGICA CORRIGIDA: Gerando cronograma ===');
+  console.log('=== CORREÇÃO FINAL: Usando data exata da compra ===');
   console.log('Data atual para verificação:', currentDate);
   console.log('Gerando cronograma para grupos:', Object.keys(installmentGroups));
   
@@ -22,30 +22,27 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     
     // Determinar o total de parcelas e valor original
     const totalInstallments = firstInstallment.totalInstallments || 
-                             Math.max(...group.map(g => g.installmentNumber || 1)) ||
-                             group.length;
+                             Math.max(...group.map(g => g.installmentNumber || 1));
     
     const originalAmount = firstInstallment.originalAmount || 
                           (firstInstallment.amount * totalInstallments);
     
     const monthlyAmount = Number((originalAmount / totalInstallments).toFixed(2));
     
-    // CORREÇÃO: Calcular a data da compra original (1 mês antes da primeira parcela cadastrada)
-    const firstRegisteredDate = new Date(firstInstallment.date + 'T00:00:00');
-    const originalPurchaseDate = new Date(firstRegisteredDate);
-    originalPurchaseDate.setMonth(originalPurchaseDate.getMonth() - 1);
-    const purchaseDateString = originalPurchaseDate.toISOString().split('T')[0];
+    // CORREÇÃO DEFINITIVA: Usar a data cadastrada como data da compra real
+    // A primeira parcela cadastrada já representa a data da compra original
+    const purchaseDateString = firstInstallment.date;
     
-    console.log('Dados do grupo CORRIGIDOS:', {
+    console.log('Dados do grupo CORRIGIDOS DEFINITIVAMENTE:', {
       description: firstInstallment.description,
       totalInstallments,
       originalAmount,
       monthlyAmount,
-      firstInstallmentRegistered: firstInstallment.date,
-      originalPurchaseDate: purchaseDateString
+      purchaseDate: purchaseDateString,
+      dataOriginalCadastrada: firstInstallment.date
     });
     
-    // Calcular todas as datas usando a data ORIGINAL da compra
+    // Calcular todas as datas usando a data REAL da compra
     const allInstallmentDates = calculateAllInstallmentDates(purchaseDateString, totalInstallments);
     
     // Gerar todas as parcelas do cronograma
@@ -67,7 +64,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
       
       const isPaid = !!existingInstallment || (hasPassedCurrentDate && monthsSinceDue > 6);
       
-      console.log(`Parcela ${i + 1}/${totalInstallments} - Data CORRETA: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment} - Meses vencidos: ${monthsSinceDue}`);
+      console.log(`Parcela ${i + 1}/${totalInstallments} - Data DEFINITIVA: ${installmentDate.toISOString().split('T')[0]} - Paga: ${isPaid} - Existe registro: ${!!existingInstallment} - Meses vencidos: ${monthsSinceDue}`);
       
       allInstallments.push({
         ...firstInstallment,
@@ -80,7 +77,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
     }
   });
   
-  console.log('Total de parcelas geradas CORRIGIDAS:', allInstallments.length);
+  console.log('Total de parcelas geradas DEFINITIVAS:', allInstallments.length);
   console.log('Parcelas pagas:', allInstallments.filter(p => p.isPaid).length);
   console.log('Parcelas pendentes:', allInstallments.filter(p => !p.isPaid).length);
   

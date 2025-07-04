@@ -19,19 +19,15 @@ const PurchaseHistoryTable: React.FC<PurchaseHistoryTableProps> = ({ installment
     const totalInstallments = firstInstallment.totalInstallments || purchaseGroup.length;
     const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
     
-    // Calcular a data original da compra (1 mês antes da primeira parcela)
-    const firstRegisteredDate = new Date(firstInstallment.date + 'T00:00:00');
-    const originalPurchaseDate = new Date(firstRegisteredDate);
-    originalPurchaseDate.setMonth(originalPurchaseDate.getMonth() - 1);
-    const purchaseDateString = originalPurchaseDate.toISOString().split('T')[0];
+    // CORREÇÃO DEFINITIVA: Usar a data cadastrada diretamente como data da compra
+    const purchaseDateString = firstInstallment.date;
     
     // Calcular a primeira parcela corretamente
     const firstInstallmentDate = calculateFirstInstallmentDate(purchaseDateString);
     
-    console.log('=== HISTORY TABLE - CORREÇÃO DE DATAS ===');
+    console.log('=== HISTORY TABLE - CORREÇÃO DEFINITIVA ===');
     console.log('Descrição:', firstInstallment.description);
-    console.log('Data da primeira parcela cadastrada:', firstInstallment.date);
-    console.log('Data da compra original calculada:', purchaseDateString);
+    console.log('Data da compra (usando data cadastrada):', purchaseDateString);
     console.log('Primeira parcela calculada:', firstInstallmentDate.toISOString().split('T')[0]);
     
     return {
@@ -67,7 +63,7 @@ const PurchaseHistoryTable: React.FC<PurchaseHistoryTableProps> = ({ installment
           Histórico de Compras Parceladas
         </CardTitle>
         <p className="text-sm text-gray-600">
-          📊 Visão geral de todas as suas compras parceladas e suas datas CORRETAS
+          📊 Visão geral de todas as suas compras parceladas com datas CORRETAS
         </p>
       </CardHeader>
       <CardContent>
@@ -131,12 +127,12 @@ const PurchaseHistoryTable: React.FC<PurchaseHistoryTableProps> = ({ installment
         </div>
         
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-800 mb-2">💡 Como Funciona CORRIGIDO:</h4>
+          <h4 className="font-medium text-blue-800 mb-2">💡 Sistema Corrigido:</h4>
           <div className="text-sm text-blue-700 space-y-1">
-            <p>• <strong>Data da Compra:</strong> Quando você fez a compra original (corrigida)</p>
+            <p>• <strong>Data da Compra:</strong> Exatamente a data que você cadastrou</p>
             <p>• <strong>1ª Parcela:</strong> Vence no mesmo dia da compra, porém no MÊS SEGUINTE</p>
             <p>• <strong>Parcelas seguintes:</strong> Mantêm o mesmo dia nos próximos meses</p>
-            <p>• <strong>Exemplo:</strong> Compra em 13/06 → 1ª parcela 13/07, 2ª parcela 13/08, etc.</p>
+            <p>• <strong>Exemplo:</strong> Compra em 17/09 → 1ª parcela 17/10, 2ª parcela 17/11, etc.</p>
           </div>
         </div>
       </CardContent>
