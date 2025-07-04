@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Users, LogIn, UserPlus } from 'lucide-react';
@@ -10,31 +10,6 @@ import RegisterForm from './auth/RegisterForm';
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading, login, register } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
-
-  // Adicionar usuários demo na inicialização se não existirem
-  useEffect(() => {
-    const demoUsers = [
-      {
-        id: "demo1",
-        name: "Usuário Demo",
-        email: "demo@teste.com",
-        password: "123456",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "admin1", 
-        name: "Administrador",
-        email: "admin@teste.com",
-        password: "admin123",
-        createdAt: new Date().toISOString(),
-      }
-    ];
-
-    const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
-    if (existingUsers.length === 0) {
-      localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
-    }
-  }, []);
 
   if (isLoading) {
     return (
@@ -59,7 +34,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Shield className="h-12 w-12 text-blue-600 mr-2" />
-            <h1 className="text-3xl font-bold text-gray-800">Controle Financeiro</h1>
+            <h1 className="text-3xl font-bold text-gray-800">FinanceApp</h1>
           </div>
           <p className="text-gray-600">
             Sistema completo de controle financeiro pessoal

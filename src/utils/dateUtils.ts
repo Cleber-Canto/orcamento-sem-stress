@@ -8,11 +8,11 @@ import { parseISO } from 'date-fns';
  * @returns Data da primeira parcela (mesmo dia da compra)
  */
 export const calculateFirstInstallmentDate = (purchaseDate: string): Date => {
-  console.log('=== DATE UTILS - PRIMEIRA PARCELA ===');
-  console.log('Data recebida:', purchaseDate);
+  console.log('=== CORREÇÃO: Calculando primeira parcela ===');
+  console.log('Data da compra recebida:', purchaseDate);
   
-  // Parse correto da data mantendo o timezone local
-  const purchase = new Date(purchaseDate + 'T00:00:00');
+  // Parse da data mantendo exatamente o que foi inserido
+  const purchase = parseISO(purchaseDate);
   
   console.log('Data parseada:', purchase.toLocaleDateString('pt-BR'));
   console.log('Detalhes - Ano:', purchase.getFullYear(), 'Mês:', purchase.getMonth() + 1, 'Dia:', purchase.getDate());
