@@ -87,36 +87,40 @@ export const useAuth = () => {
   };
 
   const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
-    console.log('📝 Tentativa de cadastro:', email);
+    console.log('📝 Tentativa de cadastro para email:', email);
     
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
-    console.log('🔍 Usuários existentes antes do cadastro:', savedUsers.map((u: any) => ({ email: u.email, id: u.id })));
-    
-    // Normalizar dados de entrada
+    // Normalizar dados de entrada ANTES de qualquer verificação
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedName = name.trim();
     const normalizedPassword = password.trim();
     
-    // Verificar se email já existe (comparação rigorosa)
-    const emailExists = savedUsers.some((u: any) => 
-      u.email.toLowerCase().trim() === normalizedEmail
-    );
+    console.log('🔄 Email normalizado:', normalizedEmail);
     
-    console.log('🔍 Verificando duplicação para email:', normalizedEmail);
-    console.log('🔍 Emails já cadastrados:', savedUsers.map((u: any) => u.email.toLowerCase().trim()));
-    console.log('🔍 Email já existe?', emailExists);
+    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
+    console.log('📋 Usuários existentes no sistema:', savedUsers.length);
+    console.log('📋 Lista completa de emails cadastrados:', savedUsers.map((u: any) => u.email));
     
-    if (emailExists) {
-      console.log('❌ Email já existe:', normalizedEmail);
+    // Verificar duplicação com comparação exata
+    const existingEmails = savedUsers.map((u: any) => u.email.toLowerCase().trim());
+    const emailAlreadyExists = existingEmails.includes(normalizedEmail);
+    
+    console.log('🔍 Verificando duplicação:');
+    console.log('   - Email a cadastrar:', normalizedEmail);
+    console.log('   - Emails já existentes:', existingEmails);
+    console.log('   - Email já existe?', emailAlreadyExists);
+    
+    if (emailAlreadyExists) {
+      console.log('❌ ERRO: Email já cadastrado -', normalizedEmail);
       return { 
         success: false, 
         message: 'Este email já possui uma conta. Faça login ou use outro email.' 
       };
     }
     
+    // Criar novo usuário
     const newUser = {
       id: Date.now().toString(),
       name: normalizedName,
@@ -129,14 +133,13 @@ export const useAuth = () => {
     savedUsers.push(newUser);
     localStorage.setItem('appUsers', JSON.stringify(savedUsers));
     
-    console.log('✅ Cadastro realizado com sucesso:', normalizedEmail);
-    console.log('💾 Usuário salvo:', { 
+    console.log('✅ SUCESSO: Cadastro realizado para:', normalizedEmail);
+    console.log('💾 Dados salvos:', { 
       email: newUser.email, 
       name: newUser.name, 
-      id: newUser.id, 
-      password: newUser.password 
+      id: newUser.id 
     });
-    console.log('📋 Total de usuários após cadastro:', savedUsers.length);
+    console.log('📊 Total de usuários após cadastro:', savedUsers.length);
     
     return { 
       success: true, 
