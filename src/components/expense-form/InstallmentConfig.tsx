@@ -22,10 +22,9 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
     if (!date || !installments) return '';
     
     console.log('=== CALCULANDO ÚLTIMA PARCELA NO FORMULÁRIO ===');
-    console.log('📝 Data inserida no formulário:', date);
+    console.log('📝 Data da compra:', date);
     console.log('📝 Número de parcelas:', installments);
     
-    // Usar a nova função que calcula todas as parcelas
     const allDates = calculateAllInstallmentDates(date, parseInt(installments));
     const lastDate = allDates[allDates.length - 1];
     
@@ -37,13 +36,25 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
     if (!date) return '';
     
     console.log('=== CALCULANDO PRIMEIRA PARCELA NO FORMULÁRIO ===');
-    console.log('📝 Data da compra inserida:', date);
+    console.log('📝 Data da compra:', date);
     
-    // A primeira parcela vence no mês seguinte, mesmo dia
     const firstDate = calculateFirstInstallmentDate(date);
     
     console.log('📝 Primeira parcela calculada:', firstDate.toLocaleDateString('pt-BR'));
     return firstDate.toLocaleDateString('pt-BR');
+  };
+
+  const getPurchaseDate = () => {
+    if (!date) return '';
+    
+    console.log('=== FORMATANDO DATA DA COMPRA ===');
+    console.log('📝 Data string recebida:', date);
+    
+    const purchaseDate = new Date(date + 'T00:00:00');
+    const formatted = purchaseDate.toLocaleDateString('pt-BR');
+    
+    console.log('📝 Data da compra formatada:', formatted);
+    return formatted;
   };
 
   return (
@@ -69,7 +80,7 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
             <p className="text-xs text-blue-700">
               • A primeira parcela vence no mesmo dia da compra, mas no MÊS SEGUINTE<br/>
               • As demais parcelas mantêm o mesmo dia nos meses subsequentes<br/>
-              • Exemplo: Compra em 26/05/2025 → 1ª parcela 26/06/2025, 2ª parcela 26/07/2025, etc.
+              • Exemplo: Compra em 17/06/2025 → 1ª parcela 17/07/2025, 2ª parcela 17/08/2025, etc.
             </p>
           </div>
           
@@ -97,7 +108,7 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
               <div className="text-sm text-green-700 mt-1">
                 <p>• Valor total: R$ {parseFloat(amount).toFixed(2)}</p>
                 <p>• Parcelas: {installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}</p>
-                <p>• Data da compra: {new Date(date).toLocaleDateString('pt-BR')}</p>
+                <p>• Data da compra: {getPurchaseDate()}</p>
                 <p>• Primeira parcela: {getFirstInstallmentDate()}</p>
                 <p>• Última parcela: {calculateLastInstallmentDate()}</p>
               </div>

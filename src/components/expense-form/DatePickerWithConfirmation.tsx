@@ -18,13 +18,18 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
   setDate
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    date ? new Date(date) : undefined
+    date ? new Date(date + 'T00:00:00') : undefined
   );
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleDateSelect = (newDate: Date | undefined) => {
     if (newDate) {
+      console.log('=== DATA SELECIONADA NO CALENDÁRIO ===');
+      console.log('📅 Data selecionada:', newDate);
+      console.log('📅 Data formatada BR:', newDate.toLocaleDateString('pt-BR'));
+      console.log('📅 Ano:', newDate.getFullYear(), 'Mês:', newDate.getMonth() + 1, 'Dia:', newDate.getDate());
+      
       setSelectedDate(newDate);
       setIsConfirmed(false);
     }
@@ -32,29 +37,53 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
 
   const confirmDate = () => {
     if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      // Garantir que a data seja convertida corretamente para string YYYY-MM-DD
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      console.log('=== CONFIRMANDO DATA SELECIONADA ===');
+      console.log('📅 Data original do calendário:', selectedDate);
+      console.log('📅 Data formatada para sistema:', formattedDate);
+      console.log('📅 Componentes: Ano:', year, 'Mês:', month, 'Dia:', day);
+      
       setDate(formattedDate);
       setIsConfirmed(true);
       setIsOpen(false);
-      
-      console.log('=== DATA CONFIRMADA PELO USUÁRIO ===');
-      console.log('📅 Data selecionada:', selectedDate.toLocaleDateString('pt-BR'));
-      console.log('📅 Data formatada para sistema:', formattedDate);
-      console.log('📅 Ano:', selectedDate.getFullYear(), 'Mês:', selectedDate.getMonth() + 1, 'Dia:', selectedDate.getDate());
     }
   };
 
   const formatDateForDisplay = (dateString: string): string => {
     if (!dateString) return '';
+    console.log('=== FORMATANDO DATA PARA DISPLAY ===');
+    console.log('📅 String recebida:', dateString);
+    
     const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
+    const formatted = date.toLocaleDateString('pt-BR');
+    
+    console.log('📅 Data parseada:', date);
+    console.log('📅 Data formatada para display:', formatted);
+    
+    return formatted;
   };
 
   const getPreviewInfo = () => {
     if (!selectedDate) return null;
     
-    const formattedDateString = selectedDate.toISOString().split('T')[0];
+    console.log('=== CALCULANDO PREVIEW ===');
+    console.log('📅 Data selecionada para preview:', selectedDate);
+    
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const formattedDateString = `${year}-${month}-${day}`;
+    
+    console.log('📅 String formatada para cálculo:', formattedDateString);
+    
     const primeiraParcela = calcularPrimeiraParcela(formattedDateString);
+    
+    console.log('📅 Primeira parcela calculada:', primeiraParcela.toLocaleDateString('pt-BR'));
     
     return {
       dataCompra: formatoPersonalizado(selectedDate),
@@ -111,7 +140,7 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
                 </p>
                 
                 <div className="text-xs text-blue-600 mb-3">
-                  <p>✅ <strong>Regra correta:</strong> A primeira parcela vence no mesmo dia, mas no MÊS SEGUINTE</p>
+                  <p>✅ <strong>Regra:</strong> A primeira parcela vence no mesmo dia, mas no MÊS SEGUINTE</p>
                   <p>• Compra em {selectedDate.getDate()}/{selectedDate.getMonth() + 1} → 1ª parcela {selectedDate.getDate()}/{selectedDate.getMonth() + 2}</p>
                   <p>• As demais parcelas seguem mensalmente no mesmo dia</p>
                 </div>
