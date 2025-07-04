@@ -11,6 +11,8 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading, login, register } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
 
+  console.log('AuthGuard - isLoading:', isLoading, 'user:', user);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -25,8 +27,11 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   if (user) {
+    console.log('User authenticated, showing app');
     return <>{children}</>;
   }
+
+  console.log('No user, showing auth screen');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

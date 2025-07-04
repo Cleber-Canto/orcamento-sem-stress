@@ -15,14 +15,14 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthGuard>
-        <BrowserRouter>
+      <BrowserRouter>
+        <AuthGuard>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthGuard>
+        </AuthGuard>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

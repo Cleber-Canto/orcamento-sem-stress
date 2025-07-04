@@ -20,6 +20,30 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
+    // Usuários demo pré-definidos
+    const demoUsers = [
+      {
+        id: '1',
+        name: 'Usuário Demo',
+        email: 'demo@teste.com',
+        password: '123456',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: '2',
+        name: 'Admin Demo',
+        email: 'admin@teste.com',
+        password: 'admin123',
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    // Garantir que os usuários demo estejam sempre disponíveis
+    const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+    if (existingUsers.length === 0) {
+      localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
+    }
+
     // Recuperar usuário do localStorage na inicialização
     const savedUser = localStorage.getItem('demoUser');
     if (savedUser) {
