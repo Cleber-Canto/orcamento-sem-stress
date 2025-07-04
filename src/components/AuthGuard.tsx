@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users, LogIn, UserPlus } from 'lucide-react';
+import { Shield, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from './auth/LoginForm';
 import RegisterForm from './auth/RegisterForm';
@@ -85,18 +85,6 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 onSwitchToRegister={() => setShowRegister(true)} 
               />
             )}
-
-            {/* Usuários Demo */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-2">
-                <Users className="h-4 w-4" />
-                Contas Demo Disponíveis:
-              </div>
-              <div className="space-y-1 text-xs text-gray-400">
-                <p>📧 <strong>demo@teste.com</strong> • 🔑 <strong>123456</strong></p>
-                <p>📧 <strong>admin@teste.com</strong> • 🔑 <strong>admin123</strong></p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 

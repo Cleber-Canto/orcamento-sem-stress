@@ -2,32 +2,39 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LogOut, User, Loader2 } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import LogoutConfirmation from './LogoutConfirmation';
 
 const UserHeader: React.FC = () => {
   const { user, logout } = useAuth();
-  const { toast } = useToast();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
-  const handleLogout = async () => {
-    console.log('🚪 Usuário solicitou logout');
-    setIsLoggingOut(true);
-    
-    // Mostrar mensagem de despedida
-    toast({
-      title: "👋 Até logo!",
-      description: `Obrigado por usar nosso sistema, ${user?.name}! Seus dados foram salvos com segurança.`,
-      duration: 3000,
-    });
-
-    // Aguardar um momento para mostrar a mensagem
-    setTimeout(() => {
-      logout();
-      setIsLoggingOut(false);
-    }, 1500);
+  const handleLogoutClick = () => {
+    console.log('🚪 Usuário clicou em sair');
+    setShowLogoutConfirmation(true);
   };
+
+  const handleConfirmLogout = () => {
+    console.log('✅ Logout confirmado');
+    logout();
+  };
+
+  const handleCancelLogout = () => {
+    console.log('❌ Logout cancelado');
+    setShowLogoutConfirmation(false);
+  };
+
+  // Se estiver mostrando a confirmação de logout, renderizar a tela de saída
+  if (showLogoutConfirmation) {
+    return (
+      <LogoutConfirmation
+        userName={user?.name || 'Usuário'}
+        onConfirmLogout={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
+    );
+  }
 
   return (
     <Card className="mb-6 bg-white/90 backdrop-blur-sm border-2 border-blue-100">
@@ -46,21 +53,11 @@ const UserHeader: React.FC = () => {
           <Button 
             variant="outline" 
             size="lg"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
+            onClick={handleLogoutClick}
             className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-300 border-2 font-semibold"
           >
-            {isLoggingOut ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Saindo...
-              </>
-            ) : (
-              <>
-                <LogOut className="h-5 w-5" />
-                Sair
-              </>
-            )}
+            <LogOut className="h-5 w-5" />
+            Sair
           </Button>
         </div>
       </CardContent>
