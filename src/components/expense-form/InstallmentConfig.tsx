@@ -17,6 +17,20 @@ interface InstallmentConfigProps {
 const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
   isInstallment, setIsInstallment, installments, setInstallments, amount, date
 }) => {
+  const calculateLastInstallmentDate = () => {
+    if (!date || !installments) return '';
+    
+    const purchaseDate = new Date(date + 'T00:00:00');
+    const lastInstallmentDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + parseInt(installments) - 1, purchaseDate.getDate());
+    
+    // Verificar se o dia existe no mês
+    if (lastInstallmentDate.getDate() !== purchaseDate.getDate()) {
+      lastInstallmentDate.setDate(0); // Último dia do mês anterior
+    }
+    
+    return lastInstallmentDate.toLocaleDateString('pt-BR');
+  };
+
   return (
     <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
       <div className="flex items-center space-x-2">
@@ -60,7 +74,7 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
             </Select>
           </div>
           
-          {amount && installments && (
+          {amount && installments && date && (
             <div className="p-3 bg-green-50 rounded-lg border border-green-200">
               <p className="text-sm font-medium text-green-800">
                 💰 Resumo do Parcelamento:
@@ -68,8 +82,8 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
               <div className="text-sm text-green-700 mt-1">
                 <p>• Valor total: R$ {parseFloat(amount).toFixed(2)}</p>
                 <p>• Parcelas: {installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}</p>
-                <p>• Primeira parcela: {new Date(date).toLocaleDateString()}</p>
-                <p>• Última parcela: {new Date(new Date(date).setMonth(new Date(date).getMonth() + parseInt(installments) - 1)).toLocaleDateString()}</p>
+                <p>• Primeira parcela: {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                <p>• Última parcela: {calculateLastInstallmentDate()}</p>
               </div>
             </div>
           )}

@@ -27,18 +27,16 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  console.log('=== CORREÇÃO PURCHASE CARD ===');
-  console.log('Data original da compra:', firstInstallment.date);
+  console.log('=== ANÁLISE DA COMPRA ===');
+  console.log('Descrição:', firstInstallment.description);
+  console.log('Data inserida pelo usuário:', firstInstallment.date);
+  console.log('Valor original:', originalAmount);
+  console.log('Total de parcelas:', totalInstallments);
+  console.log('Valor mensal:', monthlyAmount);
   
-  // Usar EXATAMENTE a data inserida pelo usuário
-  const purchaseDate = new Date(firstInstallment.date);
-  const firstInstallmentDate = new Date(firstInstallment.date); // Primeira parcela no mesmo dia
-  
-  console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
-  console.log('Data da primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
-  console.log('Dia da compra:', purchaseDate.getDate());
-  console.log('Mês da compra:', purchaseDate.getMonth() + 1);
-  console.log('Ano da compra:', purchaseDate.getFullYear());
+  // Usar a data EXATA inserida pelo usuário para calcular as parcelas
+  const purchaseDate = new Date(firstInstallment.date + 'T00:00:00');
+  console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
   
   // Calcular parcelas usando a data EXATA inserida
   let paidInstallments = 0;
@@ -55,7 +53,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       installmentDate.setDate(0); // Último dia do mês anterior
     }
     
-    console.log(`Parcela ${i + 1}: Data calculada = ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDate.getDate()}/${installmentDate.getMonth() + 1}/${installmentDate.getFullYear()})`);
+    console.log(`Parcela ${i + 1}: ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDate.getDate()}/${installmentDate.getMonth() + 1}/${installmentDate.getFullYear()})`);
     
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate < currentDate;
@@ -83,12 +81,11 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     });
   }
 
-  console.log('Resumo final:', {
-    dataOriginalCompra: firstInstallment.date,
-    paidInstallments,
-    overdueInstallments,
-    pendingInstallments
-  });
+  console.log('=== RESUMO FINAL ===');
+  console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Parcelas pagas:', paidInstallments);
+  console.log('Parcelas vencidas:', overdueInstallments);
+  console.log('Parcelas pendentes:', pendingInstallments);
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
@@ -104,7 +101,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
 
       <PurchaseExplanation
         purchaseDate={purchaseDate}
-        firstInstallmentDate={firstInstallmentDate}
+        firstInstallmentDate={purchaseDate}
       />
       
       <PurchaseStats
