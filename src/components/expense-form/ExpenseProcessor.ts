@@ -47,15 +47,28 @@ export const processCreditCardExpense = ({
     const installmentAmount = parseFloat(amount) / parseInt(installments);
     const originalAmount = parseFloat(amount);
     
+    console.log('=== CORREÇÃO CARTÃO DE CRÉDITO PARCELADO ===');
+    console.log('Data base inserida:', date);
+    
+    // Parse da data original uma única vez
+    const baseDate = new Date(date);
+    console.log('Data base parseada:', baseDate.toLocaleDateString('pt-BR'));
+    
     const dueDates = calculateInstallmentDueDates(date, parseInt(installments), cutoff, dueDay);
     
     for (let i = 0; i < parseInt(installments); i++) {
-      const baseDate = new Date(date);
+      // Calcular cada parcela mantendo o mesmo dia nos meses seguintes
       const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
+      
+      // Verificar se o dia existe no mês
+      if (installmentDate.getDate() !== baseDate.getDate()) {
+        installmentDate.setDate(0); // Último dia do mês anterior
+      }
       
       console.log(`Criando parcela ${i + 1}:`, {
         dataOriginal: date,
         dataCalculada: installmentDate.toISOString().split('T')[0],
+        dia: installmentDate.getDate(),
         mes: installmentDate.getMonth() + 1,
         ano: installmentDate.getFullYear()
       });
@@ -82,7 +95,7 @@ export const processCreditCardExpense = ({
     
     return {
       title: "Compra parcelada no cartão cadastrada!",
-      description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${new Date(date).toLocaleDateString('pt-BR')}`,
+      description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${baseDate.toLocaleDateString('pt-BR')}`,
     };
   } else {
     const dueDate = calculateDueDate(date, cutoff, dueDay);
@@ -119,13 +132,28 @@ export const processOtherPaymentMethods = ({
     const installmentAmount = parseFloat(amount) / parseInt(installments);
     const originalAmount = parseFloat(amount);
     
+    console.log('=== CORREÇÃO OUTROS MÉTODOS PARCELADO ===');
+    console.log('Data base inserida:', date);
+    
+    // Parse da data original uma única vez
+    const baseDate = new Date(date);
+    console.log('Data base parseada:', baseDate.toLocaleDateString('pt-BR'));
+    
     for (let i = 0; i < parseInt(installments); i++) {
-      const baseDate = new Date(date);
+      // Calcular cada parcela mantendo o mesmo dia nos meses seguintes
       const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
+      
+      // Verificar se o dia existe no mês
+      if (installmentDate.getDate() !== baseDate.getDate()) {
+        installmentDate.setDate(0); // Último dia do mês anterior
+      }
       
       console.log(`Criando parcela ${i + 1} para outros métodos:`, {
         dataOriginal: date,
-        dataCalculada: installmentDate.toISOString().split('T')[0]
+        dataCalculada: installmentDate.toISOString().split('T')[0],
+        dia: installmentDate.getDate(),
+        mes: installmentDate.getMonth() + 1,
+        ano: installmentDate.getFullYear()
       });
       
       const installmentExpense = {
@@ -144,7 +172,7 @@ export const processOtherPaymentMethods = ({
     
     return {
       title: "Compra parcelada cadastrada!",
-      description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${new Date(date).toLocaleDateString('pt-BR')}`,
+      description: `${description} em ${installments}x de R$ ${installmentAmount.toFixed(2)} - Data base: ${baseDate.toLocaleDateString('pt-BR')}`,
     };
   } else {
     onAddExpense(baseExpense);

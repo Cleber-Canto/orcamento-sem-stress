@@ -25,7 +25,10 @@ const PurchaseExplanation: React.FC<PurchaseExplanationProps> = ({
             ✅ A primeira parcela vence no mesmo dia da compra. As próximas parcelas mantêm o mesmo dia nos meses seguintes.
           </p>
           <p className="text-xs mt-1 text-blue-500">
-            💡 <strong>Exemplo:</strong> Compra em 20/05 → 1ª parcela 20/05, 2ª parcela 20/06, 3ª parcela 20/07, etc.
+            💡 <strong>Exemplo:</strong> Compra em {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 1).toString().padStart(2, '0')} → 
+            1ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 1).toString().padStart(2, '0')}, 
+            2ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 2).toString().padStart(2, '0')}, 
+            3ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 3).toString().padStart(2, '0')}, etc.
           </p>
         </div>
       </div>

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Expense } from '@/types/installments';
-import { calculateFirstInstallmentDate } from '@/utils/dateUtils';
 import PurchaseHeader from './PurchaseHeader';
 import PurchaseExplanation from './PurchaseExplanation';
 import PurchaseStats from './PurchaseStats';
@@ -28,33 +27,35 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  // Usar a data original da compra sem modificações
+  console.log('=== CORREÇÃO PURCHASE CARD ===');
+  console.log('Data original da compra:', firstInstallment.date);
+  
+  // Usar EXATAMENTE a data inserida pelo usuário
   const purchaseDate = new Date(firstInstallment.date);
-  const firstInstallmentDate = new Date(firstInstallment.date); // Primeira parcela no mesmo dia da compra
+  const firstInstallmentDate = new Date(firstInstallment.date); // Primeira parcela no mesmo dia
   
-  console.log('=== DEBUG PURCHASE CARD CORRIGIDO ===');
-  console.log('Data original inserida:', firstInstallment.date);
-  console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
   console.log('Data da primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
-  console.log('Total de parcelas:', totalInstallments);
-  console.log('Valor original:', originalAmount);
-  console.log('Valor mensal:', monthlyAmount);
+  console.log('Dia da compra:', purchaseDate.getDate());
+  console.log('Mês da compra:', purchaseDate.getMonth() + 1);
+  console.log('Ano da compra:', purchaseDate.getFullYear());
   
-  // Calcular parcelas seguindo exatamente a data original
+  // Calcular parcelas usando a data EXATA inserida
   let paidInstallments = 0;
   let overdueInstallments = 0;
   let pendingInstallments = 0;
   const installmentDetails = [];
   
   for (let i = 0; i < totalInstallments; i++) {
-    // Calcular a data de cada parcela mantendo o mesmo dia da compra original
-    const installmentDate = new Date(firstInstallmentDate);
-    installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
+    // Calcular cada parcela usando a data original + i meses
+    const installmentDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + i, purchaseDate.getDate());
     
     // Verificar se o dia existe no mês (ex: 31 em fevereiro)
-    if (installmentDate.getDate() !== firstInstallmentDate.getDate()) {
+    if (installmentDate.getDate() !== purchaseDate.getDate()) {
       installmentDate.setDate(0); // Último dia do mês anterior
     }
+    
+    console.log(`Parcela ${i + 1}: Data calculada = ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDate.getDate()}/${installmentDate.getMonth() + 1}/${installmentDate.getFullYear()})`);
     
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate < currentDate;
@@ -62,16 +63,6 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     const isPaid = !!existingInstallment;
     const isOverdue = hasPassedCurrentDate && !existingInstallment;
     const isPending = !hasPassedCurrentDate && !existingInstallment;
-    
-    console.log(`Parcela ${i + 1}/${totalInstallments}:`, {
-      date: installmentDate.toLocaleDateString('pt-BR'),
-      originalDate: firstInstallment.date,
-      isPaid,
-      isOverdue,
-      isPending,
-      existingInstallment: !!existingInstallment,
-      hasPassedCurrentDate
-    });
     
     if (isPaid) paidInstallments++;
     if (isOverdue) overdueInstallments++;
@@ -92,11 +83,11 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     });
   }
 
-  console.log('Resumo das parcelas corrigido:', {
+  console.log('Resumo final:', {
+    dataOriginalCompra: firstInstallment.date,
     paidInstallments,
     overdueInstallments,
-    pendingInstallments,
-    dataOriginal: firstInstallment.date
+    pendingInstallments
   });
 
   return (
