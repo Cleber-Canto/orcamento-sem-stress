@@ -16,14 +16,15 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     userEmail: user?.email 
   });
 
-  // Tela de carregamento
+  // Tela de carregamento melhorada
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-pulse">
-            <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <div className="animate-pulse mb-4">
+            <Shield className="h-16 w-16 text-blue-600 mx-auto" />
           </div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">FinanceApp</h2>
           <p className="text-gray-600">Carregando sistema...</p>
         </div>
       </div>
@@ -36,7 +37,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // Se não há usuário, SEMPRE mostra tela de login/cadastro
+  // Se não há usuário, mostra tela de login/cadastro
   console.log('🔓 Nenhum usuário logado - exibindo telas de autenticação');
 
   return (

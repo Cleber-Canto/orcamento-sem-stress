@@ -14,26 +14,26 @@ const UserHeader: React.FC = () => {
   };
 
   return (
-    <Card className="mb-6 bg-white/80 backdrop-blur-sm">
+    <Card className="mb-6 bg-white/90 backdrop-blur-sm border-2 border-blue-100">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-2 rounded-full">
-              <User className="h-5 w-5 text-blue-600" />
+            <div className="bg-blue-100 p-3 rounded-full">
+              <User className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-800">{user?.name}</h2>
+              <h2 className="font-bold text-gray-800 text-lg">{user?.name}</h2>
               <p className="text-sm text-gray-600">{user?.email}</p>
             </div>
           </div>
           
           <Button 
             variant="outline" 
-            size="sm"
+            size="lg"
             onClick={handleLogout}
-            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+            className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-300 border-2 font-semibold"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             Sair
           </Button>
         </div>
