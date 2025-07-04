@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 interface User {
@@ -57,16 +56,18 @@ export const useAuth = () => {
     
     // Normalizar email de entrada e buscar usuário
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPassword = password.trim();
+    
     const user = savedUsers.find((u: any) => 
-      u.email.toLowerCase() === normalizedEmail && 
-      u.password === password.trim()
+      u.email.toLowerCase().trim() === normalizedEmail && 
+      u.password.trim() === normalizedPassword
     );
     
-    console.log('🔍 Procurando usuário com:', { email: normalizedEmail, password: password.trim() });
+    console.log('🔍 Procurando usuário com:', { email: normalizedEmail, password: normalizedPassword });
     console.log('🔍 Usuários disponíveis:', savedUsers.map((u: any) => ({ 
       email: u.email, 
       password: u.password,
-      match: u.email.toLowerCase() === normalizedEmail && u.password === password.trim()
+      match: u.email.toLowerCase().trim() === normalizedEmail && u.password.trim() === normalizedPassword
     })));
     
     if (user) {
@@ -81,7 +82,7 @@ export const useAuth = () => {
     
     console.log('❌ Credenciais inválidas para:', email);
     console.log('🔍 Detalhes do erro - Email buscado:', normalizedEmail);
-    console.log('🔍 Emails disponíveis:', savedUsers.map((u: any) => u.email.toLowerCase()));
+    console.log('🔍 Emails disponíveis:', savedUsers.map((u: any) => u.email.toLowerCase().trim()));
     return false;
   };
 
@@ -92,11 +93,24 @@ export const useAuth = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
+    console.log('🔍 Usuários existentes antes do cadastro:', savedUsers.map((u: any) => ({ email: u.email, id: u.id })));
     
-    // Verificar se email já existe (case insensitive)
+    // Normalizar dados de entrada
     const normalizedEmail = email.toLowerCase().trim();
-    if (savedUsers.some((u: any) => u.email.toLowerCase() === normalizedEmail)) {
-      console.log('❌ Email já existe:', email);
+    const normalizedName = name.trim();
+    const normalizedPassword = password.trim();
+    
+    // Verificar se email já existe (comparação rigorosa)
+    const emailExists = savedUsers.some((u: any) => 
+      u.email.toLowerCase().trim() === normalizedEmail
+    );
+    
+    console.log('🔍 Verificando duplicação para email:', normalizedEmail);
+    console.log('🔍 Emails já cadastrados:', savedUsers.map((u: any) => u.email.toLowerCase().trim()));
+    console.log('🔍 Email já existe?', emailExists);
+    
+    if (emailExists) {
+      console.log('❌ Email já existe:', normalizedEmail);
       return { 
         success: false, 
         message: 'Este email já possui uma conta. Faça login ou use outro email.' 
@@ -105,9 +119,9 @@ export const useAuth = () => {
     
     const newUser = {
       id: Date.now().toString(),
-      name: name.trim(),
+      name: normalizedName,
       email: normalizedEmail,
-      password: password.trim(), // Normalizar senha também
+      password: normalizedPassword,
       createdAt: new Date().toISOString(),
     };
     
@@ -115,12 +129,18 @@ export const useAuth = () => {
     savedUsers.push(newUser);
     localStorage.setItem('appUsers', JSON.stringify(savedUsers));
     
-    console.log('✅ Cadastro realizado com sucesso:', email);
-    console.log('💾 Usuário salvo:', { email: newUser.email, name: newUser.name, id: newUser.id, password: newUser.password });
+    console.log('✅ Cadastro realizado com sucesso:', normalizedEmail);
+    console.log('💾 Usuário salvo:', { 
+      email: newUser.email, 
+      name: newUser.name, 
+      id: newUser.id, 
+      password: newUser.password 
+    });
+    console.log('📋 Total de usuários após cadastro:', savedUsers.length);
     
     return { 
       success: true, 
-      message: `Conta criada com sucesso! Agora você pode fazer login com ${email}` 
+      message: `Conta criada com sucesso! Agora você pode fazer login com ${normalizedEmail}` 
     };
   };
 
