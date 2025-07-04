@@ -20,83 +20,82 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    // Usuários demo pré-definidos
-    const demoUsers = [
-      {
-        id: '1',
-        name: 'Usuário Demo',
-        email: 'demo@teste.com',
-        password: '123456',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        name: 'Admin Demo',
-        email: 'admin@teste.com',
-        password: 'admin123',
-        createdAt: new Date().toISOString()
+    const initializeAuth = () => {
+      console.log('Inicializando autenticação...');
+      
+      // Usuários demo pré-definidos
+      const demoUsers = [
+        {
+          id: '1',
+          name: 'Usuário Demo',
+          email: 'demo@teste.com',
+          password: '123456',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Admin Demo',
+          email: 'admin@teste.com',
+          password: 'admin123',
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      // Garantir que os usuários demo estejam sempre disponíveis
+      const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+      if (existingUsers.length === 0) {
+        localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
       }
-    ];
 
-    // Garantir que os usuários demo estejam sempre disponíveis
-    const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
-    if (existingUsers.length === 0) {
-      localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
-    }
-
-    // Recuperar usuário do localStorage na inicialização
-    const savedUser = localStorage.getItem('demoUser');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setAuthState({ user, isLoading: false });
-      } catch (error) {
-        localStorage.removeItem('demoUser');
+      // Verificar se há usuário salvo
+      const savedUser = localStorage.getItem('demoUser');
+      console.log('Usuário salvo encontrado:', !!savedUser);
+      
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          console.log('Usuário carregado:', user.email);
+          setAuthState({ user, isLoading: false });
+        } catch (error) {
+          console.log('Erro ao carregar usuário, fazendo logout');
+          localStorage.removeItem('demoUser');
+          setAuthState({ user: null, isLoading: false });
+        }
+      } else {
+        console.log('Nenhum usuário salvo, mostrando login');
         setAuthState({ user: null, isLoading: false });
       }
-    } else {
-      setAuthState({ user: null, isLoading: false });
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log('Tentativa de login para:', email);
+    
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Usuários demo pré-definidos
-    const demoUsers = [
-      {
-        id: '1',
-        name: 'Usuário Demo',
-        email: 'demo@teste.com',
-        password: '123456',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        name: 'Admin Demo',
-        email: 'admin@teste.com',
-        password: 'admin123',
-        createdAt: new Date().toISOString()
-      }
-    ];
-
-    const savedUsers = JSON.parse(localStorage.getItem('demoUsers') || JSON.stringify(demoUsers));
+    const savedUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
     const user = savedUsers.find((u: any) => u.email === email && u.password === password);
     
     if (user) {
       const userToSave = { ...user };
-      delete userToSave.password; // Não salvar senha no estado
+      delete userToSave.password;
       
       localStorage.setItem('demoUser', JSON.stringify(userToSave));
       setAuthState({ user: userToSave, isLoading: false });
+      console.log('Login realizado com sucesso');
       return true;
     }
     
+    console.log('Credenciais inválidas');
     return false;
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    console.log('Tentativa de registro para:', email);
+    
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1500));
     
@@ -104,6 +103,7 @@ export const useAuth = () => {
     
     // Verificar se email já existe
     if (savedUsers.some((u: any) => u.email === email)) {
+      console.log('Email já existe');
       return false;
     }
     
@@ -125,12 +125,21 @@ export const useAuth = () => {
     
     localStorage.setItem('demoUser', JSON.stringify(userToSave));
     setAuthState({ user: userToSave, isLoading: false });
+    console.log('Registro realizado com sucesso');
     
     return true;
   };
 
   const logout = () => {
+    console.log('Fazendo logout...');
     localStorage.removeItem('demoUser');
+    setAuthState({ user: null, isLoading: false });
+  };
+
+  // Função para forçar logout (útil para debugging)
+  const forceLogout = () => {
+    console.log('Forçando logout...');
+    localStorage.clear();
     setAuthState({ user: null, isLoading: false });
   };
 
@@ -141,5 +150,6 @@ export const useAuth = () => {
     login,
     register,
     logout,
+    forceLogout,
   };
 };

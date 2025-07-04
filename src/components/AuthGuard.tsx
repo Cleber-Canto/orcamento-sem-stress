@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Shield, Users, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from './auth/LoginForm';
@@ -11,7 +10,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading, login, register } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
 
-  console.log('AuthGuard - isLoading:', isLoading, 'user:', user);
+  console.log('AuthGuard - Estado atual:', { isLoading, user: !!user });
 
   if (isLoading) {
     return (
@@ -26,12 +25,14 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
 
+  // Se há usuário logado, mostra o app
   if (user) {
-    console.log('User authenticated, showing app');
+    console.log('Usuário autenticado, mostrando dashboard');
     return <>{children}</>;
   }
 
-  console.log('No user, showing auth screen');
+  // Se não há usuário, mostra as telas de login/cadastro
+  console.log('Nenhum usuário logado, mostrando tela de autenticação');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
