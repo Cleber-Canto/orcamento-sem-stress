@@ -69,7 +69,7 @@ export const useAuth = () => {
     return false;
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
     console.log('📝 Tentativa de cadastro:', email);
     
     // Simular delay de API
@@ -80,7 +80,10 @@ export const useAuth = () => {
     // Verificar se email já existe
     if (savedUsers.some((u: any) => u.email === email)) {
       console.log('❌ Email já existe:', email);
-      return false;
+      return { 
+        success: false, 
+        message: 'Este email já possui uma conta. Faça login ou use outro email.' 
+      };
     }
     
     const newUser = {
@@ -95,15 +98,38 @@ export const useAuth = () => {
     savedUsers.push(newUser);
     localStorage.setItem('appUsers', JSON.stringify(savedUsers));
     
-    // Login automático após cadastro
-    const userToSave = { ...newUser };
-    delete userToSave.password;
-    
-    localStorage.setItem('appUser', JSON.stringify(userToSave));
-    setAuthState({ user: userToSave, isLoading: false });
     console.log('✅ Cadastro realizado com sucesso:', email);
     
-    return true;
+    // NÃO fazer login automático - retornar sucesso para mostrar mensagem
+    return { 
+      success: true, 
+      message: `Conta criada com sucesso! Agora você pode fazer login com ${email}` 
+    };
+  };
+
+  const resetPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+    console.log('🔄 Tentativa de recuperação de senha:', email);
+    
+    // Simular delay de API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
+    const user = savedUsers.find((u: any) => u.email === email);
+    
+    if (!user) {
+      return { 
+        success: false, 
+        message: 'Email não encontrado no sistema.' 
+      };
+    }
+    
+    // Em um sistema real, aqui enviaria email
+    console.log('📧 Email de recuperação enviado para:', email);
+    
+    return { 
+      success: true, 
+      message: `Instruções de recuperação foram enviadas para ${email}. Verifique sua caixa de entrada.` 
+    };
   };
 
   const logout = () => {
@@ -134,6 +160,7 @@ export const useAuth = () => {
     isAuthenticated: !!authState.user,
     login,
     register,
+    resetPassword,
     logout,
     forceLogout,
   };

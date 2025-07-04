@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, LogIn, UserPlus } from 'lucide-react';
+import { Shield, LogIn, UserPlus, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from './auth/LoginForm';
 import RegisterForm from './auth/RegisterForm';
+import ForgotPasswordForm from './auth/ForgotPasswordForm';
 
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading, login, register } = useAuth();
-  const [showRegister, setShowRegister] = useState(false);
+  const { user, isLoading, login, register, resetPassword } = useAuth();
+  const [currentView, setCurrentView] = useState<'login' | 'register' | 'forgot'>('login');
 
   console.log('🛡️ AuthGuard - Estado:', { 
     isLoading, 
@@ -37,8 +38,34 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // Se não há usuário, mostra tela de login/cadastro
+  // Se não há usuário, mostra tela de login/cadastro/recuperação
   console.log('🔓 Nenhum usuário logado - exibindo telas de autenticação');
+
+  const getCardTitle = () => {
+    switch (currentView) {
+      case 'register':
+        return (
+          <>
+            <UserPlus className="h-5 w-5 text-green-600" />
+            Criar Nova Conta
+          </>
+        );
+      case 'forgot':
+        return (
+          <>
+            <KeyRound className="h-5 w-5 text-orange-600" />
+            Recuperar Senha
+          </>
+        );
+      default:
+        return (
+          <>
+            <LogIn className="h-5 w-5 text-blue-600" />
+            Fazer Login
+          </>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -58,31 +85,31 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-4">
             <CardTitle className="flex items-center justify-center gap-2 text-xl">
-              {showRegister ? (
-                <>
-                  <UserPlus className="h-5 w-5 text-green-600" />
-                  Criar Nova Conta
-                </>
-              ) : (
-                <>
-                  <LogIn className="h-5 w-5 text-blue-600" />
-                  Fazer Login
-                </>
-              )}
+              {getCardTitle()}
             </CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Formulários de Login/Cadastro */}
-            {showRegister ? (
+            {/* Formulários baseados na view atual */}
+            {currentView === 'register' && (
               <RegisterForm 
                 onRegister={register}
-                onSwitchToLogin={() => setShowRegister(false)} 
+                onSwitchToLogin={() => setCurrentView('login')} 
               />
-            ) : (
+            )}
+            
+            {currentView === 'forgot' && (
+              <ForgotPasswordForm 
+                onResetPassword={resetPassword}
+                onBackToLogin={() => setCurrentView('login')} 
+              />
+            )}
+            
+            {currentView === 'login' && (
               <LoginForm 
                 onLogin={login}
-                onSwitchToRegister={() => setShowRegister(true)} 
+                onSwitchToRegister={() => setCurrentView('register')}
+                onForgotPassword={() => setCurrentView('forgot')} 
               />
             )}
           </CardContent>

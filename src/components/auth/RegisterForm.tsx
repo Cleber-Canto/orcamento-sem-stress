@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus, User, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface RegisterFormProps {
-  onRegister: (name: string, email: string, password: string) => Promise<boolean>;
+  onRegister: (name: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   onSwitchToLogin: () => void;
 }
 
@@ -18,6 +18,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { toast } = useToast();
 
   const validateForm = () => {
@@ -66,12 +67,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
     
     try {
       console.log('🔄 Tentando cadastrar usuário:', email);
-      const success = await onRegister(name.trim(), email.trim(), password);
+      const result = await onRegister(name.trim(), email.trim(), password);
       
-      if (success) {
+      if (result.success) {
+        setRegistrationSuccess(true);
         toast({
           title: "✅ Conta criada com sucesso!",
-          description: `Bem-vindo ao sistema, ${name}!`,
+          description: result.message,
         });
         // Limpar formulário
         setName('');
@@ -79,10 +81,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
         setPassword('');
         setConfirmPassword('');
       } else {
-        setErrors({ email: 'Este email já possui uma conta' });
+        setErrors({ email: result.message });
         toast({
-          title: "❌ Email já cadastrado",
-          description: "Este email já possui uma conta. Tente fazer login ou use outro email.",
+          title: "❌ Erro no cadastro",
+          description: result.message,
           variant: "destructive",
         });
       }
@@ -97,6 +99,34 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
       setIsLoading(false);
     }
   };
+
+  // Se cadastro foi bem-sucedido, mostrar mensagem de sucesso
+  if (registrationSuccess) {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+          <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-green-800 mb-2">
+            Conta criada com sucesso!
+          </h3>
+          <p className="text-green-700 text-sm mb-4">
+            Sua conta foi criada. Agora você pode fazer login no sistema.
+          </p>
+        </div>
+
+        <Button
+          onClick={onSwitchToLogin}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+        >
+          Fazer Login Agora
+        </Button>
+
+        <div className="text-center pt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+          🎉 Bem-vindo ao FinanceApp! Use suas credenciais para entrar.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -230,9 +260,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
         </Button>
       </div>
 
-      {/* Dica para testar */}
       <div className="text-center pt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
-        💡 <strong>Dica:</strong> Use um email diferente ou teste com as contas demo
+        🔒 Seus dados ficam salvos localmente no navegador
       </div>
     </form>
   );
