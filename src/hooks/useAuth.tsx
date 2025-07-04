@@ -55,7 +55,19 @@ export const useAuth = () => {
     const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
     console.log('📋 Usuários salvos:', savedUsers.map((u: any) => ({ email: u.email, hasPassword: !!u.password })));
     
-    const user = savedUsers.find((u: any) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    // Normalizar email de entrada e buscar usuário
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = savedUsers.find((u: any) => 
+      u.email.toLowerCase() === normalizedEmail && 
+      u.password === password.trim()
+    );
+    
+    console.log('🔍 Procurando usuário com:', { email: normalizedEmail, password: password.trim() });
+    console.log('🔍 Usuários disponíveis:', savedUsers.map((u: any) => ({ 
+      email: u.email, 
+      password: u.password,
+      match: u.email.toLowerCase() === normalizedEmail && u.password === password.trim()
+    })));
     
     if (user) {
       const userToSave = { ...user };
@@ -68,7 +80,7 @@ export const useAuth = () => {
     }
     
     console.log('❌ Credenciais inválidas para:', email);
-    console.log('🔍 Detalhes do erro - Email buscado:', email.toLowerCase());
+    console.log('🔍 Detalhes do erro - Email buscado:', normalizedEmail);
     console.log('🔍 Emails disponíveis:', savedUsers.map((u: any) => u.email.toLowerCase()));
     return false;
   };
@@ -82,7 +94,8 @@ export const useAuth = () => {
     const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
     
     // Verificar se email já existe (case insensitive)
-    if (savedUsers.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+    const normalizedEmail = email.toLowerCase().trim();
+    if (savedUsers.some((u: any) => u.email.toLowerCase() === normalizedEmail)) {
       console.log('❌ Email já existe:', email);
       return { 
         success: false, 
@@ -93,8 +106,8 @@ export const useAuth = () => {
     const newUser = {
       id: Date.now().toString(),
       name: name.trim(),
-      email: email.toLowerCase().trim(), // Normalizar email
-      password: password, // Manter senha original
+      email: normalizedEmail,
+      password: password.trim(), // Normalizar senha também
       createdAt: new Date().toISOString(),
     };
     
@@ -103,7 +116,7 @@ export const useAuth = () => {
     localStorage.setItem('appUsers', JSON.stringify(savedUsers));
     
     console.log('✅ Cadastro realizado com sucesso:', email);
-    console.log('💾 Usuário salvo:', { email: newUser.email, name: newUser.name, id: newUser.id });
+    console.log('💾 Usuário salvo:', { email: newUser.email, name: newUser.name, id: newUser.id, password: newUser.password });
     
     return { 
       success: true, 
