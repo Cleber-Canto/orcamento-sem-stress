@@ -132,15 +132,25 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    console.log('🚪 Fazendo logout...');
+    console.log('🚪 Fazendo logout - limpando todos os dados...');
+    
+    // Limpar dados do usuário
     localStorage.removeItem('demoUser');
+    
+    // Forçar limpeza do estado imediatamente
     setAuthState({ user: null, isLoading: false });
+    
+    // Garantir que a página seja recarregada para limpar qualquer estado residual
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const forceLogout = () => {
     console.log('🧹 Limpando todos os dados...');
     localStorage.clear();
     setAuthState({ user: null, isLoading: false });
+    window.location.reload();
   };
 
   return {

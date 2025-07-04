@@ -1,16 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const UserHeader: React.FC = () => {
   const { user, logout } = useAuth();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('🚪 Usuário solicitou logout');
-    logout();
+    setIsLoggingOut(true);
+    
+    // Mostrar mensagem de despedida
+    toast({
+      title: "👋 Até logo!",
+      description: `Obrigado por usar nosso sistema, ${user?.name}! Seus dados foram salvos com segurança.`,
+      duration: 3000,
+    });
+
+    // Aguardar um momento para mostrar a mensagem
+    setTimeout(() => {
+      logout();
+      setIsLoggingOut(false);
+    }, 1500);
   };
 
   return (
@@ -31,10 +47,20 @@ const UserHeader: React.FC = () => {
             variant="outline" 
             size="lg"
             onClick={handleLogout}
+            disabled={isLoggingOut}
             className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-300 border-2 font-semibold"
           >
-            <LogOut className="h-5 w-5" />
-            Sair
+            {isLoggingOut ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Saindo...
+              </>
+            ) : (
+              <>
+                <LogOut className="h-5 w-5" />
+                Sair
+              </>
+            )}
           </Button>
         </div>
       </CardContent>
