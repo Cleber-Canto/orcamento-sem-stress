@@ -47,37 +47,34 @@ export const processCreditCardExpense = ({
     const installmentAmount = parseFloat(amount) / parseInt(installments);
     const originalAmount = parseFloat(amount);
     
-    console.log('=== CORREÇÃO CARTÃO DE CRÉDITO PARCELADO ===');
-    console.log('Data base inserida:', date);
+    console.log('=== PROCESSOR - CARTÃO PARCELADO ===');
+    console.log('Data inserida:', date);
     
-    // Parse da data original uma única vez
-    const baseDate = new Date(date);
+    // Parse da data base uma única vez
+    const baseDate = new Date(date + 'T00:00:00');
     console.log('Data base parseada:', baseDate.toLocaleDateString('pt-BR'));
+    console.log('Base - Dia:', baseDate.getDate(), 'Mês:', baseDate.getMonth() + 1, 'Ano:', baseDate.getFullYear());
     
     const dueDates = calculateInstallmentDueDates(date, parseInt(installments), cutoff, dueDay);
     
     for (let i = 0; i < parseInt(installments); i++) {
-      // Calcular cada parcela mantendo o mesmo dia nos meses seguintes
+      // Calcular cada parcela: data base + i meses, mantendo o mesmo dia
       const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
       
-      // Verificar se o dia existe no mês
+      // Se o dia não existe no mês, vai para o último dia
       if (installmentDate.getDate() !== baseDate.getDate()) {
-        installmentDate.setDate(0); // Último dia do mês anterior
+        installmentDate.setDate(0);
       }
       
-      console.log(`Criando parcela ${i + 1}:`, {
-        dataOriginal: date,
-        dataCalculada: installmentDate.toISOString().split('T')[0],
-        dia: installmentDate.getDate(),
-        mes: installmentDate.getMonth() + 1,
-        ano: installmentDate.getFullYear()
-      });
+      const installmentDateString = installmentDate.toISOString().split('T')[0];
+      
+      console.log(`Parcela ${i + 1}: ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDateString})`);
       
       const installmentExpense = {
         ...baseExpense,
         description: `${description}`,
         amount: installmentAmount,
-        date: installmentDate.toISOString().split('T')[0],
+        date: installmentDateString,
         installmentNumber: i + 1,
         totalInstallments: parseInt(installments),
         originalAmount: originalAmount,
@@ -132,35 +129,32 @@ export const processOtherPaymentMethods = ({
     const installmentAmount = parseFloat(amount) / parseInt(installments);
     const originalAmount = parseFloat(amount);
     
-    console.log('=== CORREÇÃO OUTROS MÉTODOS PARCELADO ===');
-    console.log('Data base inserida:', date);
+    console.log('=== PROCESSOR - OUTROS MÉTODOS PARCELADO ===');
+    console.log('Data inserida:', date);
     
-    // Parse da data original uma única vez
-    const baseDate = new Date(date);
+    // Parse da data base uma única vez
+    const baseDate = new Date(date + 'T00:00:00');
     console.log('Data base parseada:', baseDate.toLocaleDateString('pt-BR'));
+    console.log('Base - Dia:', baseDate.getDate(), 'Mês:', baseDate.getMonth() + 1, 'Ano:', baseDate.getFullYear());
     
     for (let i = 0; i < parseInt(installments); i++) {
-      // Calcular cada parcela mantendo o mesmo dia nos meses seguintes
+      // Calcular cada parcela: data base + i meses, mantendo o mesmo dia
       const installmentDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, baseDate.getDate());
       
-      // Verificar se o dia existe no mês
+      // Se o dia não existe no mês, vai para o último dia
       if (installmentDate.getDate() !== baseDate.getDate()) {
-        installmentDate.setDate(0); // Último dia do mês anterior
+        installmentDate.setDate(0);
       }
       
-      console.log(`Criando parcela ${i + 1} para outros métodos:`, {
-        dataOriginal: date,
-        dataCalculada: installmentDate.toISOString().split('T')[0],
-        dia: installmentDate.getDate(),
-        mes: installmentDate.getMonth() + 1,
-        ano: installmentDate.getFullYear()
-      });
+      const installmentDateString = installmentDate.toISOString().split('T')[0];
+      
+      console.log(`Parcela ${i + 1}: ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDateString})`);
       
       const installmentExpense = {
         ...baseExpense,
         description: `${description}`,
         amount: installmentAmount,
-        date: installmentDate.toISOString().split('T')[0],
+        date: installmentDateString,
         installmentNumber: i + 1,
         totalInstallments: parseInt(installments),
         originalAmount: originalAmount,

@@ -11,6 +11,18 @@ const PurchaseExplanation: React.FC<PurchaseExplanationProps> = ({
   purchaseDate,
   firstInstallmentDate
 }) => {
+  // Calcular as próximas parcelas para o exemplo
+  const secondInstallment = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, purchaseDate.getDate());
+  const thirdInstallment = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 2, purchaseDate.getDate());
+  
+  // Ajustar se o dia não existe no mês
+  if (secondInstallment.getDate() !== purchaseDate.getDate()) {
+    secondInstallment.setDate(0);
+  }
+  if (thirdInstallment.getDate() !== purchaseDate.getDate()) {
+    thirdInstallment.setDate(0);
+  }
+
   return (
     <div className="mb-4 p-3 bg-blue-100 rounded-lg border border-blue-200">
       <div className="flex items-start gap-2">
@@ -27,8 +39,8 @@ const PurchaseExplanation: React.FC<PurchaseExplanationProps> = ({
           <p className="text-xs mt-1 text-blue-500">
             💡 <strong>Exemplo:</strong> Compra em {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 1).toString().padStart(2, '0')} → 
             1ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 1).toString().padStart(2, '0')}, 
-            2ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 2).toString().padStart(2, '0')}, 
-            3ª parcela {purchaseDate.getDate()}/{(purchaseDate.getMonth() + 3).toString().padStart(2, '0')}, etc.
+            2ª parcela {secondInstallment.getDate()}/{(secondInstallment.getMonth() + 1).toString().padStart(2, '0')}, 
+            3ª parcela {thirdInstallment.getDate()}/{(thirdInstallment.getMonth() + 1).toString().padStart(2, '0')}, etc.
           </p>
         </div>
       </div>
