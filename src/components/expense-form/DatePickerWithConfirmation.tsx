@@ -71,7 +71,7 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
   const getPreviewInfo = () => {
     if (!selectedDate) return null;
     
-    console.log('=== CALCULANDO PREVIEW ===');
+    console.log('=== CALCULANDO PREVIEW CORRETO ===');
     console.log('📅 Data selecionada para preview:', selectedDate);
     
     const year = selectedDate.getFullYear();
@@ -83,7 +83,9 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
     
     const primeiraParcela = calcularPrimeiraParcela(formattedDateString);
     
-    console.log('📅 Primeira parcela calculada:', primeiraParcela.toLocaleDateString('pt-BR'));
+    console.log('📅 PRIMEIRA PARCELA CORRIGIDA:', primeiraParcela.toLocaleDateString('pt-BR'));
+    console.log('📅 Verificação: Compra dia', selectedDate.getDate(), 'mês', selectedDate.getMonth() + 1);
+    console.log('📅 Verificação: 1ª parcela dia', primeiraParcela.getDate(), 'mês', primeiraParcela.getMonth() + 1);
     
     return {
       dataCompra: formatoPersonalizado(selectedDate),
