@@ -28,22 +28,27 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  console.log('=== ANÁLISE DA COMPRA (CORRIGINDO DATA) ===');
+  console.log('=== PURCHASE CARD - USANDO DATA ORIGINAL ===');
   console.log('Descrição:', firstInstallment.description);
-  console.log('Data ORIGINAL da compra:', firstInstallment.date);
+  console.log('Data ORIGINAL da primeira parcela cadastrada:', firstInstallment.date);
   console.log('Valor original:', originalAmount);
   console.log('Total de parcelas:', totalInstallments);
-  console.log('Valor mensal:', monthlyAmount);
   
-  // Usar a data EXATA da compra sem alterações
-  const purchaseDateString = firstInstallment.date;
-  const purchaseDate = new Date(purchaseDateString + 'T00:00:00');
-  console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
-  console.log('Data original string:', purchaseDateString);
+  // Para compras parceladas, vamos calcular a data da compra original
+  // que deve ser 1 mês antes da primeira parcela cadastrada
+  const firstRegisteredDate = new Date(firstInstallment.date + 'T00:00:00');
+  const originalPurchaseDate = new Date(firstRegisteredDate);
+  originalPurchaseDate.setMonth(originalPurchaseDate.getMonth() - 1);
   
-  // Calcular a primeira parcela usando a data correta
+  const purchaseDateString = originalPurchaseDate.toISOString().split('T')[0];
+  
+  console.log('Data da primeira parcela cadastrada:', firstRegisteredDate.toLocaleDateString('pt-BR'));
+  console.log('Data da compra ORIGINAL calculada:', originalPurchaseDate.toLocaleDateString('pt-BR'));
+  console.log('String da data da compra:', purchaseDateString);
+  
+  // Calcular a primeira parcela usando a data correta da compra
   const firstInstallmentDate = calculateFirstInstallmentDate(purchaseDateString);
-  console.log('Primeira parcela calculada:', firstInstallmentDate.toLocaleDateString('pt-BR'));
+  console.log('Primeira parcela recalculada:', firstInstallmentDate.toLocaleDateString('pt-BR'));
   
   // Calcular todas as datas de parcelas
   const allInstallmentDates = calculateAllInstallmentDates(purchaseDateString, totalInstallments);
@@ -86,8 +91,8 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   }
 
   console.log('=== RESUMO FINAL (DATA CORRIGIDA) ===');
-  console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
-  console.log('Primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
+  console.log('Data da compra original:', originalPurchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Primeira parcela calculada:', firstInstallmentDate.toLocaleDateString('pt-BR'));
   console.log('Parcelas pagas:', paidInstallments);
   console.log('Parcelas vencidas:', overdueInstallments);
   console.log('Parcelas pendentes:', pendingInstallments);
@@ -95,7 +100,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
       <PurchaseHeader
-        firstInstallment={firstInstallment}
+        firstInstallment={{...firstInstallment, date: purchaseDateString}}
         originalAmount={originalAmount}
         totalInstallments={totalInstallments}
         monthlyAmount={monthlyAmount}
@@ -105,7 +110,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       />
 
       <PurchaseExplanation
-        purchaseDate={purchaseDate}
+        purchaseDate={originalPurchaseDate}
         firstInstallmentDate={firstInstallmentDate}
       />
       
