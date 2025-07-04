@@ -3,6 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DatePickerWithConfirmation from './DatePickerWithConfirmation';
 
 interface BasicExpenseFieldsProps {
   description: string;
@@ -94,15 +95,7 @@ const BasicExpenseFields: React.FC<BasicExpenseFieldsProps> = ({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="date">Data da Compra</Label>
-        <Input
-          id="date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-      </div>
+      <DatePickerWithConfirmation date={date} setDate={setDate} />
     </>
   );
 };
