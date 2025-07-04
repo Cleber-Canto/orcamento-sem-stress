@@ -20,15 +20,33 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
   const calculateLastInstallmentDate = () => {
     if (!date || !installments) return '';
     
+    // Usar a data EXATA inserida pelo usuário
     const purchaseDate = new Date(date + 'T00:00:00');
-    const lastInstallmentDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + parseInt(installments) - 1, purchaseDate.getDate());
+    console.log('Data inserida pelo usuário (InstallmentConfig):', date);
+    console.log('Data processada:', purchaseDate.toLocaleDateString('pt-BR'));
+    
+    // Calcular a última parcela baseada na data inserida
+    const lastInstallmentDate = new Date(
+      purchaseDate.getFullYear(), 
+      purchaseDate.getMonth() + parseInt(installments) - 1, 
+      purchaseDate.getDate()
+    );
     
     // Verificar se o dia existe no mês
     if (lastInstallmentDate.getDate() !== purchaseDate.getDate()) {
       lastInstallmentDate.setDate(0); // Último dia do mês anterior
     }
     
+    console.log('Última parcela calculada:', lastInstallmentDate.toLocaleDateString('pt-BR'));
     return lastInstallmentDate.toLocaleDateString('pt-BR');
+  };
+
+  const getFirstInstallmentDate = () => {
+    if (!date) return '';
+    
+    // A primeira parcela vence na data EXATA da compra
+    const purchaseDate = new Date(date + 'T00:00:00');
+    return purchaseDate.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -82,7 +100,7 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
               <div className="text-sm text-green-700 mt-1">
                 <p>• Valor total: R$ {parseFloat(amount).toFixed(2)}</p>
                 <p>• Parcelas: {installments}x de R$ {(parseFloat(amount) / parseInt(installments)).toFixed(2)}</p>
-                <p>• Primeira parcela: {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                <p>• Primeira parcela: {getFirstInstallmentDate()}</p>
                 <p>• Última parcela: {calculateLastInstallmentDate()}</p>
               </div>
             </div>

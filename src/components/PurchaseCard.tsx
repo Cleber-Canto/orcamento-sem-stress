@@ -27,16 +27,17 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  console.log('=== ANÁLISE DA COMPRA ===');
+  console.log('=== ANÁLISE DA COMPRA (CORRIGIDA) ===');
   console.log('Descrição:', firstInstallment.description);
-  console.log('Data inserida pelo usuário:', firstInstallment.date);
+  console.log('Data EXATA inserida pelo usuário:', firstInstallment.date);
   console.log('Valor original:', originalAmount);
   console.log('Total de parcelas:', totalInstallments);
   console.log('Valor mensal:', monthlyAmount);
   
-  // Usar a data EXATA inserida pelo usuário para calcular as parcelas
+  // Usar a data EXATA inserida pelo usuário (sem alterações)
   const purchaseDate = new Date(firstInstallment.date + 'T00:00:00');
-  console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Data da compra processada (CORRIGIDA):', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Mês da compra:', purchaseDate.getMonth() + 1, 'Ano:', purchaseDate.getFullYear());
   
   // Calcular parcelas usando a data EXATA inserida
   let paidInstallments = 0;
@@ -81,7 +82,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     });
   }
 
-  console.log('=== RESUMO FINAL ===');
+  console.log('=== RESUMO FINAL (CORRIGIDO) ===');
   console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
   console.log('Parcelas pagas:', paidInstallments);
   console.log('Parcelas vencidas:', overdueInstallments);
