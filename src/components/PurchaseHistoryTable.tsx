@@ -118,7 +118,7 @@ const PurchaseHistoryTable: React.FC<PurchaseHistoryTableProps> = ({ installment
           <h4 className="font-medium text-blue-800 mb-2">💡 Como Funciona:</h4>
           <div className="text-sm text-blue-700 space-y-1">
             <p>• <strong>Data da Compra:</strong> Quando você fez a compra original</p>
-            <p>• <strong>1ª Parcela:</strong> Vence no mesmo dia da compra (regra corrigida)</p>
+            <p>• <strong>1ª Parcela:</strong> Vence no mesmo dia da compra</p>
             <p>• <strong>Parcelas seguintes:</strong> Mantêm o mesmo dia nos próximos meses</p>
             <p>• <strong>Exemplo:</strong> Compra em 13/06 → 1ª parcela 13/06, 2ª parcela 13/07, etc.</p>
           </div>

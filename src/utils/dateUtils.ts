@@ -10,6 +10,6 @@ import { addMonths, parseISO } from 'date-fns';
 export const calculateFirstInstallmentDate = (purchaseDate: string): Date => {
   const purchase = parseISO(purchaseDate);
   
-  // A primeira parcela vence no mesmo dia da compra (não no mês seguinte)
+  // A primeira parcela vence no mesmo dia da compra
   return purchase;
 };

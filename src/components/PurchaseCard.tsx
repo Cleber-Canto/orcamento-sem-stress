@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Expense } from '@/types/installments';
-import { calculateFirstInstallmentDate } from '@/utils/installmentUtils';
+import { calculateFirstInstallmentDate } from '@/utils/dateUtils';
 import PurchaseHeader from './PurchaseHeader';
 import PurchaseExplanation from './PurchaseExplanation';
 import PurchaseStats from './PurchaseStats';
@@ -30,14 +30,23 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   
   const purchaseDate = new Date(firstInstallment.date);
   
+  // A primeira parcela vence no mesmo dia da compra
+  const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+  
+  console.log('=== DEBUG PURCHASE CARD ===');
+  console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Data da primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
+  console.log('Total de parcelas:', totalInstallments);
+  console.log('Valor original:', originalAmount);
+  console.log('Valor mensal:', monthlyAmount);
+  console.log('Parcelas existentes no banco:', purchaseGroup.length);
+  console.log('Parcelas existentes:', purchaseGroup.map(p => ({ number: p.installmentNumber, date: p.date })));
+  
   // Calcular parcelas seguindo o dia da compra
   let paidInstallments = 0;
   let overdueInstallments = 0;
   let pendingInstallments = 0;
   const installmentDetails = [];
-  
-  // A primeira parcela vence no mesmo dia da compra (não no mês seguinte)
-  const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
   
   for (let i = 0; i < totalInstallments; i++) {
     // Calcular a data de cada parcela mantendo o mesmo dia
@@ -57,9 +66,18 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       (currentDate.getFullYear() - installmentDate.getFullYear()) * 12 + 
       (currentDate.getMonth() - installmentDate.getMonth()) : 0;
     
-    const isPaid = !!existingInstallment || (hasPassedCurrentDate && monthsSinceDue > 6);
-    const isOverdue = hasPassedCurrentDate && !existingInstallment && monthsSinceDue <= 6;
+    const isPaid = !!existingInstallment;
+    const isOverdue = hasPassedCurrentDate && !existingInstallment;
     const isPending = !hasPassedCurrentDate && !existingInstallment;
+    
+    console.log(`Parcela ${i + 1}/${totalInstallments}:`, {
+      date: installmentDate.toLocaleDateString('pt-BR'),
+      isPaid,
+      isOverdue,
+      isPending,
+      existingInstallment: !!existingInstallment,
+      hasPassedCurrentDate
+    });
     
     if (isPaid) paidInstallments++;
     if (isOverdue) overdueInstallments++;
@@ -79,6 +97,12 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       amount: monthlyAmount
     });
   }
+
+  console.log('Resumo das parcelas:', {
+    paidInstallments,
+    overdueInstallments,
+    pendingInstallments
+  });
 
   return (
     <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
