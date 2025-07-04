@@ -39,7 +39,25 @@ export const useAuth = () => {
     // Simular delay de API
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const savedUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+    // Usuários demo pré-definidos
+    const demoUsers = [
+      {
+        id: '1',
+        name: 'Usuário Demo',
+        email: 'demo@teste.com',
+        password: '123456',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: '2',
+        name: 'Admin Demo',
+        email: 'admin@teste.com',
+        password: 'admin123',
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    const savedUsers = JSON.parse(localStorage.getItem('demoUsers') || JSON.stringify(demoUsers));
     const user = savedUsers.find((u: any) => u.email === email && u.password === password);
     
     if (user) {
