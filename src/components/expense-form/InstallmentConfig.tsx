@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard } from 'lucide-react';
+import { calculateFirstInstallmentDate, calculateAllInstallmentDates } from '@/utils/dateUtils';
 
 interface InstallmentConfigProps {
   isInstallment: boolean;
@@ -20,33 +21,29 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
   const calculateLastInstallmentDate = () => {
     if (!date || !installments) return '';
     
-    // Usar a data EXATA inserida pelo usuário
-    const purchaseDate = new Date(date + 'T00:00:00');
-    console.log('Data inserida pelo usuário (InstallmentConfig):', date);
-    console.log('Data processada:', purchaseDate.toLocaleDateString('pt-BR'));
+    console.log('=== CALCULANDO ÚLTIMA PARCELA (NOVA LÓGICA) ===');
+    console.log('Data da compra:', date);
+    console.log('Número de parcelas:', installments);
     
-    // Calcular a última parcela baseada na data inserida
-    const lastInstallmentDate = new Date(
-      purchaseDate.getFullYear(), 
-      purchaseDate.getMonth() + parseInt(installments) - 1, 
-      purchaseDate.getDate()
-    );
+    // Usar a nova função que calcula todas as parcelas
+    const allDates = calculateAllInstallmentDates(date, parseInt(installments));
+    const lastDate = allDates[allDates.length - 1];
     
-    // Verificar se o dia existe no mês
-    if (lastInstallmentDate.getDate() !== purchaseDate.getDate()) {
-      lastInstallmentDate.setDate(0); // Último dia do mês anterior
-    }
-    
-    console.log('Última parcela calculada:', lastInstallmentDate.toLocaleDateString('pt-BR'));
-    return lastInstallmentDate.toLocaleDateString('pt-BR');
+    console.log('Última parcela:', lastDate.toLocaleDateString('pt-BR'));
+    return lastDate.toLocaleDateString('pt-BR');
   };
 
   const getFirstInstallmentDate = () => {
     if (!date) return '';
     
-    // A primeira parcela vence na data EXATA da compra
-    const purchaseDate = new Date(date + 'T00:00:00');
-    return purchaseDate.toLocaleDateString('pt-BR');
+    console.log('=== CALCULANDO PRIMEIRA PARCELA (NOVA LÓGICA) ===');
+    console.log('Data da compra:', date);
+    
+    // A primeira parcela vence no mês seguinte, mesmo dia
+    const firstDate = calculateFirstInstallmentDate(date);
+    
+    console.log('Primeira parcela:', firstDate.toLocaleDateString('pt-BR'));
+    return firstDate.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -70,9 +67,9 @@ const InstallmentConfig: React.FC<InstallmentConfigProps> = ({
               🔄 Como funciona o parcelamento:
             </p>
             <p className="text-xs text-blue-700">
-              • O valor será dividido igualmente entre as parcelas<br/>
-              • Cada parcela será lançada nos próximos meses automaticamente<br/>
-              • Para cartão de crédito, as datas de vencimento seguem o corte configurado
+              • A primeira parcela vence no mesmo dia da compra, mas no MÊS SEGUINTE<br/>
+              • As demais parcelas mantêm o mesmo dia nos meses subsequentes<br/>
+              • Exemplo: Compra em 25/05 → 1ª parcela 25/06, 2ª parcela 25/07, etc.
             </p>
           </div>
           

@@ -6,6 +6,7 @@ import PurchaseExplanation from './PurchaseExplanation';
 import PurchaseStats from './PurchaseStats';
 import PurchaseProgressBar from './PurchaseProgressBar';
 import InstallmentGrid from './InstallmentGrid';
+import { calculateFirstInstallmentDate, calculateAllInstallmentDates } from '@/utils/dateUtils';
 
 interface PurchaseCardProps {
   purchaseGroup: Expense[];
@@ -27,34 +28,34 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   const originalAmount = firstInstallment.originalAmount || (firstInstallment.amount * totalInstallments);
   const monthlyAmount = originalAmount / totalInstallments;
   
-  console.log('=== ANÁLISE DA COMPRA (CORRIGIDA) ===');
+  console.log('=== ANÁLISE DA COMPRA (NOVA LÓGICA) ===');
   console.log('Descrição:', firstInstallment.description);
   console.log('Data EXATA inserida pelo usuário:', firstInstallment.date);
   console.log('Valor original:', originalAmount);
   console.log('Total de parcelas:', totalInstallments);
   console.log('Valor mensal:', monthlyAmount);
   
-  // Usar a data EXATA inserida pelo usuário (sem alterações)
+  // Usar a data EXATA inserida pelo usuário
   const purchaseDate = new Date(firstInstallment.date + 'T00:00:00');
-  console.log('Data da compra processada (CORRIGIDA):', purchaseDate.toLocaleDateString('pt-BR'));
-  console.log('Mês da compra:', purchaseDate.getMonth() + 1, 'Ano:', purchaseDate.getFullYear());
+  console.log('Data da compra processada:', purchaseDate.toLocaleDateString('pt-BR'));
   
-  // Calcular parcelas usando a data EXATA inserida
+  // Calcular a primeira parcela (mês seguinte, mesmo dia)
+  const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+  console.log('Primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
+  
+  // Calcular todas as datas de parcelas
+  const allInstallmentDates = calculateAllInstallmentDates(firstInstallment.date, totalInstallments);
+  
+  // Calcular status das parcelas
   let paidInstallments = 0;
   let overdueInstallments = 0;
   let pendingInstallments = 0;
   const installmentDetails = [];
   
   for (let i = 0; i < totalInstallments; i++) {
-    // Calcular cada parcela usando a data original + i meses
-    const installmentDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + i, purchaseDate.getDate());
+    const installmentDate = allInstallmentDates[i];
     
-    // Verificar se o dia existe no mês (ex: 31 em fevereiro)
-    if (installmentDate.getDate() !== purchaseDate.getDate()) {
-      installmentDate.setDate(0); // Último dia do mês anterior
-    }
-    
-    console.log(`Parcela ${i + 1}: ${installmentDate.toLocaleDateString('pt-BR')} (${installmentDate.getDate()}/${installmentDate.getMonth() + 1}/${installmentDate.getFullYear()})`);
+    console.log(`Parcela ${i + 1}: ${installmentDate.toLocaleDateString('pt-BR')}`);
     
     const existingInstallment = purchaseGroup.find(exp => exp.installmentNumber === (i + 1));
     const hasPassedCurrentDate = installmentDate < currentDate;
@@ -82,8 +83,9 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     });
   }
 
-  console.log('=== RESUMO FINAL (CORRIGIDO) ===');
+  console.log('=== RESUMO FINAL (NOVA LÓGICA) ===');
   console.log('Data da compra:', purchaseDate.toLocaleDateString('pt-BR'));
+  console.log('Primeira parcela:', firstInstallmentDate.toLocaleDateString('pt-BR'));
   console.log('Parcelas pagas:', paidInstallments);
   console.log('Parcelas vencidas:', overdueInstallments);
   console.log('Parcelas pendentes:', pendingInstallments);
@@ -102,7 +104,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
 
       <PurchaseExplanation
         purchaseDate={purchaseDate}
-        firstInstallmentDate={purchaseDate}
+        firstInstallmentDate={firstInstallmentDate}
       />
       
       <PurchaseStats

@@ -1,12 +1,13 @@
 
 import { Expense, EnhancedInstallment } from '@/types/installments';
-import { calculateFirstInstallmentDate } from './dateUtils';
+import { calculateAllInstallmentDates } from './dateUtils';
 
-// Gerar cronograma completo de todas as parcelas seguindo a data da compra
+// Gerar cronograma completo de todas as parcelas seguindo a nova lógica
 export const generateAllInstallments = (installmentGroups: { [key: string]: Expense[] }) => {
   const allInstallments: EnhancedInstallment[] = [];
   const currentDate = new Date();
   
+  console.log('=== NOVA LÓGICA: Gerando cronograma ===');
   console.log('Data atual para verificação:', currentDate);
   console.log('Gerando cronograma para grupos:', Object.keys(installmentGroups));
   
@@ -33,25 +34,16 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
       description: firstInstallment.description,
       totalInstallments,
       originalAmount,
-      monthlyAmount
+      monthlyAmount,
+      purchaseDate: firstInstallment.date
     });
     
-    // Usar a data da compra como base para calcular as parcelas
-    const purchaseDate = new Date(firstInstallment.date);
-    
-    // Calcular a primeira parcela (mês seguinte, mesmo dia)
-    const firstInstallmentDate = calculateFirstInstallmentDate(firstInstallment.date);
+    // Calcular todas as datas usando a nova lógica
+    const allInstallmentDates = calculateAllInstallmentDates(firstInstallment.date, totalInstallments);
     
     // Gerar todas as parcelas do cronograma
     for (let i = 0; i < totalInstallments; i++) {
-      // Calcular a data de cada parcela mantendo o mesmo dia
-      const installmentDate = new Date(firstInstallmentDate);
-      installmentDate.setMonth(firstInstallmentDate.getMonth() + i);
-      
-      // Ajustar para o último dia do mês se o dia não existir (ex: 31 em fevereiro)
-      if (installmentDate.getMonth() !== (firstInstallmentDate.getMonth() + i) % 12) {
-        installmentDate.setDate(0); // Vai para o último dia do mês anterior
-      }
+      const installmentDate = allInstallmentDates[i];
       
       // Verificar se esta parcela já foi registrada
       const existingInstallment = group.find(exp => exp.installmentNumber === (i + 1));
