@@ -3,11 +3,17 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogOut, User } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import LogoutConfirmation from './LogoutConfirmation';
 
-const UserHeader: React.FC = () => {
-  const { user, logout } = useAuth();
+interface UserHeaderProps {
+  user: {
+    name: string;
+    email: string;
+  };
+  onLogout: () => void;
+}
+
+const UserHeader: React.FC<UserHeaderProps> = ({ user, onLogout }) => {
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
   const handleLogoutClick = () => {
@@ -17,7 +23,7 @@ const UserHeader: React.FC = () => {
 
   const handleConfirmLogout = () => {
     console.log('✅ Logout confirmado');
-    logout();
+    onLogout();
   };
 
   const handleCancelLogout = () => {

@@ -1,6 +1,6 @@
 // ✅ Interface de Objetivo Financeiro
 export interface Goal {
-  id: number;
+  id: string;
   name: string;
   target: number;
   current: number;
@@ -9,7 +9,7 @@ export interface Goal {
 
 // ✅ Interface de Receita
 export interface Income {
-  id: number;
+  id: string;
   description: string;
   amount: number;
   type: 'salary' | 'extra' | 'investment' | 'freelance' | 'bonus';
@@ -19,7 +19,7 @@ export interface Income {
 
 // ✅ Interface de Despesa
 export interface Expense {
-  id: number;
+  id: string;
   category: string;
   amount: number;
   date: string; // Data da compra/lançamento (ex: '2025-05-20')
@@ -52,6 +52,6 @@ export interface Expense {
   installments?: Expense[];
 
   // Evita duplicidade no cronograma
-  originalExpenseId?: number; // ID da despesa original, se for uma parcela derivada
+  originalExpenseId?: string; // ID da despesa original, se for uma parcela derivada
   originalAmount?: number; // Valor original da compra para parceladas
 }

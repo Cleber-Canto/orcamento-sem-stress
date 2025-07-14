@@ -13,7 +13,7 @@ interface DashboardContentProps {
   remainingBalance: number;
   expenses: Expense[];
   goals: Goal[];
-  onDeleteExpense: (expenseId: number) => void;
+  onDeleteExpense: (expenseId: string) => void;
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({

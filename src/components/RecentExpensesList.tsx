@@ -7,7 +7,7 @@ import { Expense } from '@/types/financial';
 
 interface RecentExpensesListProps {
   expenses: Expense[];
-  onDeleteExpense: (expenseId: number) => void;
+  onDeleteExpense: (expenseId: string) => void;
 }
 
 const RecentExpensesList: React.FC<RecentExpensesListProps> = ({ expenses, onDeleteExpense }) => {
