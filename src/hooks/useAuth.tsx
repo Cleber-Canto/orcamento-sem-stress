@@ -22,6 +22,45 @@ export const useAuth = () => {
     const initializeAuth = () => {
       console.log('🔄 Inicializando sistema de autenticação...');
       
+      // Limpar dados antigos do Supabase para evitar conflitos
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-eefabkjvdtqpvqvcciut-auth-token');
+      
+      // Criar contas padrão se não existirem
+      const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
+      console.log('📋 Usuários existentes:', savedUsers.length);
+      
+      if (savedUsers.length === 0) {
+        console.log('🔧 Criando contas padrão...');
+        const defaultUsers = [
+          {
+            id: 'user-1',
+            name: 'Carlos Saraiva',
+            email: 'cantosaraiva97@gmail.com',
+            password: '12345CLE',
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'user-2',
+            name: 'Carlos Saraiva',
+            email: 'cantosaraiva@hotmail.com',
+            password: '1234cl',
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'user-3',
+            name: 'Lana Silva',
+            email: 'lana_luka@hotmail.com',
+            password: '12345LC',
+            createdAt: new Date().toISOString(),
+          }
+        ];
+        localStorage.setItem('appUsers', JSON.stringify(defaultUsers));
+        console.log('✅ Contas padrão criadas:', defaultUsers.map(u => u.email));
+      } else {
+        console.log('📋 Contas existentes:', savedUsers.map((u: any) => u.email));
+      }
+      
       // Verificar se existe usuário logado
       const savedUser = localStorage.getItem('appUser');
       

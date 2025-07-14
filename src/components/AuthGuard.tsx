@@ -106,11 +106,37 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             )}
             
             {currentView === 'login' && (
-              <LoginForm 
-                onLogin={login}
-                onSwitchToRegister={() => setCurrentView('register')}
-                onForgotPassword={() => setCurrentView('forgot')} 
-              />
+              <>
+                <LoginForm 
+                  onLogin={login}
+                  onSwitchToRegister={() => setCurrentView('register')}
+                  onForgotPassword={() => setCurrentView('forgot')} 
+                />
+                
+                {/* Informações das contas de teste */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h3 className="text-sm font-medium text-blue-800 mb-2">
+                    🔑 Contas de teste disponíveis:
+                  </h3>
+                  <div className="space-y-1 text-xs text-blue-700">
+                    <div className="flex justify-between">
+                      <span>cantosaraiva97@gmail.com</span>
+                      <span className="font-mono">12345CLE</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>cantosaraiva@hotmail.com</span>
+                      <span className="font-mono">1234cl</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>lana_luka@hotmail.com</span>
+                      <span className="font-mono">12345LC</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    💡 Ou cadastre uma nova conta!
+                  </p>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
