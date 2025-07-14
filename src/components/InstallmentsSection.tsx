@@ -36,7 +36,7 @@ const InstallmentsSection: React.FC<InstallmentsSectionProps> = ({ expenses, onD
   const handleDeletePurchase = (purchaseGroup: Expense[], description: string) => {
     // Deletar todas as parcelas desta compra
     purchaseGroup.forEach(expense => {
-      onDeleteExpense(expense.id);
+      onDeleteExpense(expense.id as any);
     });
 
     toast({

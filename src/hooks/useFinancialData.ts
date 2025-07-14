@@ -68,7 +68,7 @@ export const useFinancialData = () => {
 
     // Se não for parcelado, adiciona direto
     if (!expense.isInstallment || !expense.totalInstallments || expense.totalInstallments <= 1) {
-      setExpenses(prev => [...prev, { ...expense, id: newId }]);
+      setExpenses(prev => [...prev, { ...expense, id: newId.toString() } as any]);
       return;
     }
 
@@ -78,7 +78,7 @@ export const useFinancialData = () => {
       new Date(expense.date),
       expense.totalInstallments
     ).map((parcela, idx) => ({
-      id: Number(`${newId}${idx}`), // id único para cada parcela
+      id: `${newId}${idx}`, // id único para cada parcela
       category: expense.category,
       amount: parcela.amount,
       date: parcela.date,
@@ -93,15 +93,15 @@ export const useFinancialData = () => {
 
     const expenseComParcelas: Expense = {
       ...expense,
-      id: newId,
+      id: newId.toString(),
       installments: parcelas,
     };
 
-    setExpenses(prev => [...prev, expenseComParcelas]);
+    setExpenses(prev => [...prev, expenseComParcelas as any]);
   };
 
   const deleteExpense = (expenseId: number) => {
-    setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
+    setExpenses(prev => prev.filter(expense => expense.id !== expenseId.toString()));
   };
 
   return {

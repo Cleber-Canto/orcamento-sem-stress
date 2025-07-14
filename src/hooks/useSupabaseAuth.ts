@@ -93,12 +93,24 @@ export const useSupabaseAuth = () => {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `${window.location.origin}/`
       });
 
       if (error) {
         toast.error(error.message);
         return { success: false, message: error.message };
+      }
+
+      // Chamar edge function para enviar email personalizado
+      try {
+        await supabase.functions.invoke('send-recovery-email', {
+          body: { 
+            email: email,
+            resetUrl: `${window.location.origin}/reset-password`
+          }
+        });
+      } catch (emailError) {
+        console.log('Edge function error (não crítico):', emailError);
       }
 
       toast.success('Email de recuperação enviado!');

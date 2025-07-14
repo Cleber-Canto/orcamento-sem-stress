@@ -72,7 +72,7 @@ export const generateAllInstallments = (installmentGroups: { [key: string]: Expe
         amount: monthlyAmount,
         date: installmentDate.toISOString().split('T')[0],
         isPaid: isPaid,
-        id: Date.now() + Math.random() + i // Gerar ID único numérico
+        id: `${Date.now()}-${Math.random()}-${i}` // Gerar ID único como string
       });
     }
   });

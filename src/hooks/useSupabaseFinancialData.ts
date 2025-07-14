@@ -48,14 +48,14 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       const convertedExpenses: Expense[] = expensesData?.map(expense => ({
         id: expense.id,
         category: expense.category,
-        amount: parseFloat(expense.amount),
+        amount: parseFloat(expense.amount?.toString() || '0'),
         date: expense.date,
         description: expense.description,
         paymentMethod: expense.payment_method as any,
         isInstallment: expense.is_installment,
         installmentNumber: expense.installment_number,
         totalInstallments: expense.total_installments,
-        originalAmount: expense.original_amount ? parseFloat(expense.original_amount) : undefined,
+        originalAmount: expense.original_amount ? parseFloat(expense.original_amount?.toString() || '0') : undefined,
         dueDate: expense.due_date,
         billingInfo: expense.billing_cutoff_day ? {
           cutoffDay: expense.billing_cutoff_day,
@@ -71,15 +71,15 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       const convertedGoals: Goal[] = goalsData?.map(goal => ({
         id: goal.id,
         name: goal.name,
-        target: parseFloat(goal.target),
-        current: parseFloat(goal.current),
+        target: parseFloat(goal.target?.toString() || '0'),
+        current: parseFloat(goal.current?.toString() || '0'),
         type: goal.type as 'save' | 'limit'
       })) || [];
 
       const convertedIncomes: Income[] = incomesData?.map(income => ({
         id: income.id,
         description: income.description,
-        amount: parseFloat(income.amount),
+        amount: parseFloat(income.amount?.toString() || '0'),
         type: income.type as any,
         date: income.date,
         isRecurring: income.is_recurring
@@ -89,10 +89,10 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       setGoals(convertedGoals);
       setIncomes(convertedIncomes);
 
-      const monthlyIncome = convertedIncomes
+      const monthlyIncomeTotal = convertedIncomes
         .filter(income => income.isRecurring)
         .reduce((sum, income) => sum + income.amount, 0);
-      setMonthlyIncome(monthlyIncome);
+      setMonthlyIncome(monthlyIncomeTotal);
 
     } catch (error: any) {
       toast.error('Erro ao carregar dados financeiros');
