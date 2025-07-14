@@ -1,17 +1,7 @@
 
-export interface Expense {
-  id: number;
-  category: string;
-  amount: number;
-  date: string;
-  description: string;
-  paymentMethod?: string;
-  isInstallment?: boolean;
-  installments?: number;
-  installmentNumber?: number;
-  totalInstallments?: number;
-  originalAmount?: number;
-}
+import { Expense } from './financial';
+
+export type { Expense } from './financial';
 
 export interface InstallmentsSectionProps {
   expenses: Expense[];

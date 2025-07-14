@@ -53,4 +53,5 @@ export interface Expense {
 
   // Evita duplicidade no cronograma
   originalExpenseId?: number; // ID da despesa original, se for uma parcela derivada
+  originalAmount?: number; // Valor original da compra para parceladas
 }

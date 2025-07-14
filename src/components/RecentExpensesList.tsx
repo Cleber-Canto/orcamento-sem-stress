@@ -3,22 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign, Trash2 } from 'lucide-react';
-
-interface Expense {
-  id: number;
-  category: string;
-  amount: number;
-  date: string;
-  description: string;
-  paymentMethod?: string;
-  isInstallment?: boolean;
-  installments?: number;
-  installmentNumber?: number;
-  totalInstallments?: number;
-  isRecurring?: boolean;
-  recurringFrequency?: string;
-  notes?: string;
-}
+import { Expense } from '@/types/financial';
 
 interface RecentExpensesListProps {
   expenses: Expense[];
