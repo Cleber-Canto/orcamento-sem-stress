@@ -36,7 +36,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         remainingBalance={remainingBalance}
       />
       <RecentExpensesList expenses={expenses} onDeleteExpense={onDeleteExpense} />
-      <GoalsProgress goals={goals} />
+      <GoalsProgress goals={goals as any} />
     </div>
   );
 };

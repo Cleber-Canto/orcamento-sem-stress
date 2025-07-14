@@ -10,7 +10,6 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Buscar dados quando userId estiver disponível
   useEffect(() => {
     if (userId) {
       fetchAllData();
@@ -23,7 +22,6 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
     try {
       setIsLoading(true);
       
-      // Buscar despesas
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
         .select('*')
@@ -32,7 +30,6 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
 
       if (expensesError) throw expensesError;
 
-      // Buscar objetivos
       const { data: goalsData, error: goalsError } = await supabase
         .from('goals')
         .select('*')
@@ -40,7 +37,6 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
 
       if (goalsError) throw goalsError;
 
-      // Buscar receitas
       const { data: incomesData, error: incomesError } = await supabase
         .from('incomes')
         .select('*')
@@ -49,14 +45,13 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
 
       if (incomesError) throw incomesError;
 
-      // Converter dados do banco para o formato esperado
       const convertedExpenses: Expense[] = expensesData?.map(expense => ({
         id: expense.id,
         category: expense.category,
         amount: parseFloat(expense.amount),
         date: expense.date,
         description: expense.description,
-        paymentMethod: expense.payment_method as 'PIX' | 'Boleto' | 'Cartão de Crédito' | 'Cartão de Débito' | 'Débito Automático',
+        paymentMethod: expense.payment_method as any,
         isInstallment: expense.is_installment,
         installmentNumber: expense.installment_number,
         totalInstallments: expense.total_installments,
@@ -68,7 +63,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
           billingMonth: expense.billing_month
         } : undefined,
         isRecurring: expense.is_recurring,
-        recurringFrequency: expense.recurring_frequency as 'monthly' | 'weekly' | 'yearly',
+        recurringFrequency: expense.recurring_frequency as any,
         notes: expense.notes,
         originalExpenseId: expense.original_expense_id
       })) || [];
@@ -85,7 +80,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
         id: income.id,
         description: income.description,
         amount: parseFloat(income.amount),
-        type: income.type as 'salary' | 'extra' | 'investment' | 'freelance' | 'bonus',
+        type: income.type as any,
         date: income.date,
         isRecurring: income.is_recurring
       })) || [];
@@ -94,7 +89,6 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       setGoals(convertedGoals);
       setIncomes(convertedIncomes);
 
-      // Calcular renda mensal total
       const monthlyIncome = convertedIncomes
         .filter(income => income.isRecurring)
         .reduce((sum, income) => sum + income.amount, 0);
@@ -140,7 +134,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       if (error) throw error;
 
       toast.success('Despesa adicionada com sucesso!');
-      await fetchAllData(); // Recarregar dados
+      await fetchAllData();
     } catch (error: any) {
       toast.error('Erro ao adicionar despesa');
       console.error('Error adding expense:', error);
@@ -160,22 +154,19 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       if (error) throw error;
 
       toast.success('Despesa excluída com sucesso!');
-      await fetchAllData(); // Recarregar dados
+      await fetchAllData();
     } catch (error: any) {
       toast.error('Erro ao excluir despesa');
       console.error('Error deleting expense:', error);
     }
   };
 
-  // Cálculos
   const totalExtraIncome = incomes
     .filter(income => !income.isRecurring)
     .reduce((sum, income) => sum + income.amount, 0);
 
   const totalIncome = monthlyIncome + totalExtraIncome;
-
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-
   const remainingBalance = totalIncome - totalExpenses;
 
   return {
