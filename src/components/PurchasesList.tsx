@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from 'lucide-react';
@@ -12,10 +11,10 @@ interface PurchasesListProps {
   onUpdatePurchaseDate?: (purchaseGroup: Expense[], newDate: string) => void;
 }
 
-const PurchasesList: React.FC<PurchasesListProps> = ({ 
-  installmentPurchases, 
-  onDeletePurchase, 
-  onUpdatePurchaseDate 
+const PurchasesList: React.FC<PurchasesListProps> = ({
+  installmentPurchases,
+  onDeletePurchase,
+  onUpdatePurchaseDate,
 }) => {
   if (installmentPurchases.length === 0) {
     return <EmptyPurchasesState />;
@@ -34,15 +33,21 @@ const PurchasesList: React.FC<PurchasesListProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {installmentPurchases.map((purchaseGroup, index) => (
-            <PurchaseCard
-              key={index}
-              purchaseGroup={purchaseGroup}
-              index={index}
-              onDeletePurchase={onDeletePurchase}
-              onUpdatePurchaseDate={onUpdatePurchaseDate}
-            />
-          ))}
+          {installmentPurchases
+            // 🔍 Filtra para mostrar apenas um card por compra parcelada (ignorando as demais parcelas)
+            .filter((purchaseGroup) => {
+              const first = purchaseGroup[0];
+              return !first.installmentNumber || first.installmentNumber === 1;
+            })
+            .map((purchaseGroup, index) => (
+              <PurchaseCard
+                key={index}
+                purchaseGroup={purchaseGroup}
+                index={index}
+                onDeletePurchase={onDeletePurchase}
+                onUpdatePurchaseDate={onUpdatePurchaseDate}
+              />
+            ))}
         </div>
       </CardContent>
     </Card>

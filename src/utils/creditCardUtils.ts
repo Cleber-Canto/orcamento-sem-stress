@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { addMonths, setDate, isBefore, format, parseISO } from 'date-fns';
 
