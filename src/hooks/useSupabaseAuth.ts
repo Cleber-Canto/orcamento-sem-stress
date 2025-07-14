@@ -19,9 +19,35 @@ export const useSupabaseAuth = () => {
   });
 
   useEffect(() => {
+    // Get initial session first
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔄 Sessão inicial:', session ? 'Encontrada' : 'Não encontrada');
+        
+        setAuthState({
+          user: session?.user ?? null,
+          session: session,
+          isLoading: false,
+          isAuthenticated: !!session
+        });
+      } catch (error) {
+        console.error('❌ Erro ao carregar sessão:', error);
+        setAuthState({
+          user: null,
+          session: null,
+          isLoading: false,
+          isAuthenticated: false
+        });
+      }
+    };
+
+    initializeAuth();
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔄 Estado de autenticação mudou:', event, session ? 'Usuário logado' : 'Usuário deslogado');
         setAuthState({
           user: session?.user ?? null,
           session: session,
@@ -30,16 +56,6 @@ export const useSupabaseAuth = () => {
         });
       }
     );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAuthState({
-        user: session?.user ?? null,
-        session: session,
-        isLoading: false,
-        isAuthenticated: !!session
-      });
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -72,19 +88,24 @@ export const useSupabaseAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('🔄 Tentando login com Supabase:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('❌ Erro no login:', error.message);
         toast.error(error.message);
         return false;
       }
 
+      console.log('✅ Login com Supabase realizado com sucesso!');
       toast.success('Login realizado com sucesso!');
       return true;
     } catch (error: any) {
+      console.error('❌ Erro no login:', error);
       toast.error('Erro ao fazer login');
       return false;
     }

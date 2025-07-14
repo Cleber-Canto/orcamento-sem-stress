@@ -35,10 +35,27 @@ const FinancialDashboard = () => {
     setIncomes
   } = useSupabaseFinancialData(user?.id);
 
+  // Limpar localStorage local para evitar conflitos
+  React.useEffect(() => {
+    localStorage.removeItem('appUser');
+    localStorage.removeItem('appUsers');
+  }, []);
+
+  // Log para debugar
+  React.useEffect(() => {
+    console.log('📊 Estado do FinancialDashboard:', {
+      user: user ? 'Logado' : 'Não logado',
+      email: user?.email,
+      authLoading,
+      dataLoading
+    });
+  }, [user, authLoading, dataLoading]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (authMode === 'login') {
+      console.log('🔄 Tentando login via FinancialDashboard...');
       await signIn(email, password);
     } else if (authMode === 'register') {
       await signUp(email, password, name);
@@ -111,6 +128,15 @@ const FinancialDashboard = () => {
                 {authMode === 'forgot' && 'Enviar Email'}
               </Button>
             </form>
+            
+            {authMode === 'login' && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 font-medium">Contas de teste:</p>
+                <p className="text-xs text-blue-600">cantosaraiva97@gmail.com</p>
+                <p className="text-xs text-blue-600">cantosaraiva@hotmail.com</p>
+                <p className="text-xs text-blue-600 mt-1">Ou cadastre uma nova conta!</p>
+              </div>
+            )}
             
             <div className="mt-4 text-center space-y-2">
               {authMode === 'login' && (
