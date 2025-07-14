@@ -102,6 +102,7 @@ export const useSupabaseAuth = () => {
       }
 
       // Chamar edge function para enviar email personalizado
+      console.log('🔄 Tentando enviar email personalizado...');
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-recovery-email', {
         body: { 
           email: email,
@@ -110,10 +111,10 @@ export const useSupabaseAuth = () => {
       });
 
       if (emailError) {
-        console.error('Erro na função edge:', emailError);
+        console.error('❌ Erro na função edge:', emailError);
         toast.error(`Erro ao enviar email personalizado: ${emailError.message}`);
       } else {
-        console.log('Email personalizado enviado:', emailData);
+        console.log('✅ Email personalizado enviado:', emailData);
       }
 
       toast.success('Email de recuperação enviado!');

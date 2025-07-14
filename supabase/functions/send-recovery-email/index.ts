@@ -1,7 +1,12 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
 import { Resend } from 'npm:resend@4.0.0'
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+console.log('🚀 Iniciando edge function send-recovery-email...');
+
+const apiKey = Deno.env.get('RESEND_API_KEY');
+console.log('🔑 API Key configurada na inicialização:', apiKey ? 'Sim' : 'Não');
+
+const resend = new Resend(apiKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,12 +19,23 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔄 Iniciando envio de email...');
     const { email, resetUrl } = await req.json()
+    console.log('📧 Email:', email);
+    console.log('🔗 URL de reset:', resetUrl);
 
     if (!email) {
       throw new Error('Email é obrigatório')
     }
 
+    const apiKey = Deno.env.get('RESEND_API_KEY');
+    console.log('🔑 API Key configurada:', apiKey ? 'Sim' : 'Não');
+    
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY não configurada');
+    }
+
+    console.log('📬 Enviando email via Resend...');
     const { data, error } = await resend.emails.send({
       from: 'Controle Financeiro <onboarding@resend.dev>',
       to: [email],
@@ -63,6 +79,9 @@ serve(async (req) => {
       `,
     })
 
+    console.log('📧 Resposta do Resend:', data);
+    console.log('❌ Erro do Resend:', error);
+
     if (error) {
       throw error
     }
@@ -79,6 +98,7 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Erro ao enviar email:', error)
+    console.error('Stack trace:', error.stack)
     return new Response(
       JSON.stringify({ 
         success: false, 
