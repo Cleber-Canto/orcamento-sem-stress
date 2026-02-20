@@ -23,7 +23,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       setIsLoading(true);
       
       const { data: expensesData, error: expensesError } = await supabase
-        .from('expenses')
+        .from('expenses' as any)
         .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false });
@@ -31,21 +31,21 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
       if (expensesError) throw expensesError;
 
       const { data: goalsData, error: goalsError } = await supabase
-        .from('goals')
+        .from('goals' as any)
         .select('*')
         .eq('user_id', userId);
 
       if (goalsError) throw goalsError;
 
       const { data: incomesData, error: incomesError } = await supabase
-        .from('incomes')
+        .from('incomes' as any)
         .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
       if (incomesError) throw incomesError;
 
-      const convertedExpenses: Expense[] = expensesData?.map(expense => ({
+      const convertedExpenses: Expense[] = (expensesData as any[])?.map((expense: any) => ({
         id: expense.id,
         category: expense.category,
         amount: parseFloat(expense.amount?.toString() || '0'),
@@ -68,7 +68,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
         originalExpenseId: expense.original_expense_id
       })) || [];
 
-      const convertedGoals: Goal[] = goalsData?.map(goal => ({
+      const convertedGoals: Goal[] = (goalsData as any[])?.map((goal: any) => ({
         id: goal.id,
         name: goal.name,
         target: parseFloat(goal.target?.toString() || '0'),
@@ -76,7 +76,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
         type: goal.type as 'save' | 'limit'
       })) || [];
 
-      const convertedIncomes: Income[] = incomesData?.map(income => ({
+      const convertedIncomes: Income[] = (incomesData as any[])?.map((income: any) => ({
         id: income.id,
         description: income.description,
         amount: parseFloat(income.amount?.toString() || '0'),
@@ -106,8 +106,8 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('expenses')
+      const { error } = await supabase
+        .from('expenses' as any)
         .insert({
           user_id: userId,
           category: expenseData.category,
@@ -127,9 +127,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
           recurring_frequency: expenseData.recurringFrequency,
           notes: expenseData.notes,
           original_expense_id: expenseData.originalExpenseId
-        })
-        .select()
-        .single();
+        } as any);
 
       if (error) throw error;
 
@@ -146,7 +144,7 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
 
     try {
       const { error } = await supabase
-        .from('expenses')
+        .from('expenses' as any)
         .delete()
         .eq('id', expenseId)
         .eq('user_id', userId);
