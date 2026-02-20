@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -19,218 +20,79 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    const initializeAuth = () => {
-      console.log('🔄 Inicializando sistema de autenticação...');
-      
-      // Limpar dados antigos do Supabase para evitar conflitos
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.removeItem('sb-eefabkjvdtqpvqvcciut-auth-token');
-      
-      // Criar contas padrão se não existirem
-      const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
-      console.log('📋 Usuários existentes:', savedUsers.length);
-      
-      if (savedUsers.length === 0) {
-        console.log('🔧 Criando contas padrão...');
-        const defaultUsers = [
-          {
-            id: 'user-1',
-            name: 'Carlos Saraiva',
-            email: 'cantosaraiva97@gmail.com',
-            password: '12345CLE',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'user-2',
-            name: 'Carlos Saraiva',
-            email: 'cantosaraiva@hotmail.com',
-            password: '1234cl',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'user-3',
-            name: 'Lana Silva',
-            email: 'lana_luka@hotmail.com',
-            password: '12345LC',
-            createdAt: new Date().toISOString(),
-          }
-        ];
-        localStorage.setItem('appUsers', JSON.stringify(defaultUsers));
-        console.log('✅ Contas padrão criadas:', defaultUsers.map(u => u.email));
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const user: User = {
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Usuário',
+          email: session.user.email || '',
+          createdAt: session.user.created_at,
+        };
+        setAuthState({ user, isLoading: false });
       } else {
-        console.log('📋 Contas existentes:', savedUsers.map((u: any) => u.email));
-      }
-      
-      // Verificar se existe usuário logado
-      const savedUser = localStorage.getItem('appUser');
-      
-      if (savedUser) {
-        try {
-          const user = JSON.parse(savedUser);
-          console.log('👤 Usuário encontrado:', user.email);
-          setAuthState({ user, isLoading: false });
-        } catch (error) {
-          console.log('❌ Erro ao carregar usuário, limpando dados');
-          localStorage.removeItem('appUser');
-          setAuthState({ user: null, isLoading: false });
-        }
-      } else {
-        console.log('🔓 Nenhum usuário logado - mostrando tela de login');
         setAuthState({ user: null, isLoading: false });
       }
-    };
+    });
 
-    // Simular carregamento para melhor UX
-    setTimeout(initializeAuth, 800);
+    // THEN check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const user: User = {
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Usuário',
+          email: session.user.email || '',
+          createdAt: session.user.created_at,
+        };
+        setAuthState({ user, isLoading: false });
+      } else {
+        setAuthState({ user: null, isLoading: false });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('🔐 Tentativa de login:', email);
-    
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
-    console.log('📋 Usuários salvos:', savedUsers.map((u: any) => ({ email: u.email, hasPassword: !!u.password })));
-    
-    // Normalizar email de entrada e buscar usuário
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedPassword = password.trim();
-    
-    const user = savedUsers.find((u: any) => 
-      u.email.toLowerCase().trim() === normalizedEmail && 
-      u.password.trim() === normalizedPassword
-    );
-    
-    console.log('🔍 Procurando usuário com:', { email: normalizedEmail, password: normalizedPassword });
-    console.log('🔍 Usuários disponíveis:', savedUsers.map((u: any) => ({ 
-      email: u.email, 
-      password: u.password,
-      match: u.email.toLowerCase().trim() === normalizedEmail && u.password.trim() === normalizedPassword
-    })));
-    
-    if (user) {
-      const userToSave = { ...user };
-      delete userToSave.password;
-      
-      localStorage.setItem('appUser', JSON.stringify(userToSave));
-      setAuthState({ user: userToSave, isLoading: false });
-      console.log('✅ Login realizado com sucesso para:', email);
-      return true;
-    }
-    
-    console.log('❌ Credenciais inválidas para:', email);
-    console.log('🔍 Detalhes do erro - Email buscado:', normalizedEmail);
-    console.log('🔍 Emails disponíveis:', savedUsers.map((u: any) => u.email.toLowerCase().trim()));
-    return false;
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim(),
+    });
+    return !error;
   };
 
   const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
-    console.log('📝 Tentativa de cadastro para email:', email);
-    
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Normalizar dados de entrada ANTES de qualquer verificação
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedName = name.trim();
-    const normalizedPassword = password.trim();
-    
-    console.log('🔄 Email normalizado:', normalizedEmail);
-    
-    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
-    console.log('📋 Usuários existentes no sistema:', savedUsers.length);
-    console.log('📋 Lista completa de emails cadastrados:', savedUsers.map((u: any) => u.email));
-    
-    // Verificar duplicação com comparação exata
-    const existingEmails = savedUsers.map((u: any) => u.email.toLowerCase().trim());
-    const emailAlreadyExists = existingEmails.includes(normalizedEmail);
-    
-    console.log('🔍 Verificando duplicação:');
-    console.log('   - Email a cadastrar:', normalizedEmail);
-    console.log('   - Emails já existentes:', existingEmails);
-    console.log('   - Email já existe?', emailAlreadyExists);
-    
-    if (emailAlreadyExists) {
-      console.log('❌ ERRO: Email já cadastrado -', normalizedEmail);
-      return { 
-        success: false, 
-        message: 'Este email já possui uma conta. Faça login ou use outro email.' 
-      };
-    }
-    
-    // Criar novo usuário
-    const newUser = {
-      id: Date.now().toString(),
-      name: normalizedName,
-      email: normalizedEmail,
-      password: normalizedPassword,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Salvar novo usuário
-    savedUsers.push(newUser);
-    localStorage.setItem('appUsers', JSON.stringify(savedUsers));
-    
-    console.log('✅ SUCESSO: Cadastro realizado para:', normalizedEmail);
-    console.log('💾 Dados salvos:', { 
-      email: newUser.email, 
-      name: newUser.name, 
-      id: newUser.id 
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password.trim(),
+      options: {
+        data: { name: name.trim() },
+        emailRedirectTo: window.location.origin,
+      },
     });
-    console.log('📊 Total de usuários após cadastro:', savedUsers.length);
-    
-    return { 
-      success: true, 
-      message: `Conta criada com sucesso! Agora você pode fazer login com ${normalizedEmail}` 
-    };
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: true, message: 'Conta criada com sucesso! Verifique seu email para confirmar.' };
   };
 
   const resetPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
-    console.log('🔄 Tentativa de recuperação de senha:', email);
-    
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const savedUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
-    const user = savedUsers.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (!user) {
-      return { 
-        success: false, 
-        message: 'Email não encontrado no sistema.' 
-      };
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      return { success: false, message: error.message };
     }
-    
-    // Em um sistema real, aqui enviaria email
-    console.log('📧 Email de recuperação enviado para:', email);
-    
-    return { 
-      success: true, 
-      message: `Instruções de recuperação foram enviadas para ${email}. Verifique sua caixa de entrada.` 
-    };
+
+    return { success: true, message: `Instruções de recuperação enviadas para ${email}.` };
   };
 
-  const logout = () => {
-    console.log('🚪 Fazendo logout - limpando dados do usuário...');
-    
-    // Limpar apenas dados do usuário logado (mantém usuários cadastrados)
-    localStorage.removeItem('appUser');
-    
-    // Forçar limpeza do estado
+  const logout = async () => {
+    await supabase.auth.signOut();
     setAuthState({ user: null, isLoading: false });
-    
-    // Recarregar página para garantir limpeza completa
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  };
-
-  const forceLogout = () => {
-    console.log('🧹 Limpando todos os dados...');
-    localStorage.clear();
-    setAuthState({ user: null, isLoading: false });
-    window.location.reload();
   };
 
   return {
@@ -241,6 +103,6 @@ export const useAuth = () => {
     register,
     resetPassword,
     logout,
-    forceLogout,
+    forceLogout: logout,
   };
 };

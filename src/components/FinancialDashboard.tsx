@@ -3,7 +3,7 @@ import NavigationTabs from './NavigationTabs';
 import TabContentRenderer from './TabContentRenderer';
 import UserHeader from './UserHeader';
 import { useAuth } from '@/hooks/useAuth';
-import { useFinancialData } from '@/hooks/useFinancialData';
+import { useSupabaseFinancialData } from '@/hooks/useSupabaseFinancialData';
 
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -23,7 +23,7 @@ const FinancialDashboard = () => {
     setGoals,
     setMonthlyIncome,
     setIncomes
-  } = useFinancialData();
+  } = useSupabaseFinancialData(user?.id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">

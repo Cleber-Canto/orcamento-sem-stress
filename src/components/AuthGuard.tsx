@@ -143,8 +143,8 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         {/* Rodapé Informativo */}
         <div className="mt-6 text-center text-xs text-gray-500">
-          <p>🔒 Seus dados ficam salvos localmente no navegador</p>
-          <p>Sistema de demonstração - FinanceApp</p>
+          <p>🔒 Seus dados ficam salvos com segurança no Supabase</p>
+          <p>FinanceApp - Controle Financeiro</p>
         </div>
       </div>
     </div>

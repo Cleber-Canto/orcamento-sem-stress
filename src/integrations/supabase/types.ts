@@ -14,7 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          amount: number
+          billing_cutoff_day: number | null
+          billing_due_day: number | null
+          billing_month: string | null
+          category: string
+          created_at: string
+          date: string
+          description: string
+          due_date: string | null
+          id: string
+          installment_number: number | null
+          is_installment: boolean | null
+          is_recurring: boolean | null
+          notes: string | null
+          original_amount: number | null
+          original_expense_id: string | null
+          payment_method: string | null
+          recurring_frequency: string | null
+          total_installments: number | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          billing_cutoff_day?: number | null
+          billing_due_day?: number | null
+          billing_month?: string | null
+          category: string
+          created_at?: string
+          date: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          is_installment?: boolean | null
+          is_recurring?: boolean | null
+          notes?: string | null
+          original_amount?: number | null
+          original_expense_id?: string | null
+          payment_method?: string | null
+          recurring_frequency?: string | null
+          total_installments?: number | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_cutoff_day?: number | null
+          billing_due_day?: number | null
+          billing_month?: string | null
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          is_installment?: boolean | null
+          is_recurring?: boolean | null
+          notes?: string | null
+          original_amount?: number | null
+          original_expense_id?: string | null
+          payment_method?: string | null
+          recurring_frequency?: string | null
+          total_installments?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          created_at: string
+          current: number
+          id: string
+          name: string
+          target: number
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current?: number
+          id?: string
+          name: string
+          target?: number
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current?: number
+          id?: string
+          name?: string
+          target?: number
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          is_recurring: boolean | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date: string
+          description?: string
+          id?: string
+          is_recurring?: boolean | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          is_recurring?: boolean | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
