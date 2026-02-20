@@ -2,9 +2,15 @@
 import React from 'react';
 import ExpenseForm from './ExpenseForm';
 import DashboardContent from './DashboardContent';
-import SupabaseOnlyNotice from './SupabaseOnlyNotice';
+import InstallmentsSection from './InstallmentsSection';
+import GoalsSection from './GoalsSection';
+import IncomeSection from './IncomeSection';
+import BudgetSection from './BudgetSection';
+import CreditCardBilling from './CreditCardBilling';
+import AlertsSection from './AlertsSection';
+import EducationSection from './EducationSection';
+import ExpenseChart from './ExpenseChart';
 import { Goal, Income, Expense } from '@/types/financial';
-import { groupInstallmentsByPurchase } from '@/utils/installmentUtils';
 
 interface TabContentRendererProps {
   activeTab: string;
@@ -39,29 +45,25 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
   onSetMonthlyIncome,
   onSetIncomes
 }) => {
-  // Processar dados de parcelas para o histórico
-  const installmentGroups = groupInstallmentsByPurchase(expenses);
-  const installmentPurchases = Object.values(installmentGroups);
-
   switch (activeTab) {
     case 'add':
       return <ExpenseForm onAddExpense={onAddExpense} />;
     case 'charts':
-      return <SupabaseOnlyNotice featureName="Gráficos e Relatórios" />;
+      return <ExpenseChart expenses={expenses as any} />;
     case 'goals':
-      return <SupabaseOnlyNotice featureName="Metas Financeiras" />;
+      return <GoalsSection goals={goals as any} setGoals={onSetGoals as any} />;
     case 'alerts':
-      return <SupabaseOnlyNotice featureName="Alertas Inteligentes" />;
+      return <AlertsSection expenses={expenses as any} goals={goals as any} monthlyIncome={monthlyIncome} />;
     case 'education':
-      return <SupabaseOnlyNotice featureName="Educação Financeira" />;
+      return <EducationSection />;
     case 'income':
-      return <SupabaseOnlyNotice featureName="Controle de Receitas" />;
+      return <IncomeSection monthlyIncome={monthlyIncome} setMonthlyIncome={onSetMonthlyIncome} incomes={incomes as any} setIncomes={onSetIncomes as any} />;
     case 'installments':
-      return <SupabaseOnlyNotice featureName="Controle de Parcelas" />;
+      return <InstallmentsSection expenses={expenses} onDeleteExpense={onDeleteExpense as any} />;
     case 'budget':
-      return <SupabaseOnlyNotice featureName="Orçamento Mensal" />;
+      return <BudgetSection expenses={expenses as any} monthlyIncome={monthlyIncome} />;
     case 'credit-card':
-      return <SupabaseOnlyNotice featureName="Fatura do Cartão" />;
+      return <CreditCardBilling expenses={expenses as any} />;
     default:
       return (
         <DashboardContent
