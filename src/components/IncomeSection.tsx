@@ -9,7 +9,7 @@ import { DollarSign, Plus, Edit, Trash2, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Income {
-  id: number;
+  id: string;
   description: string;
   amount: number;
   type: 'salary' | 'extra' | 'investment' | 'freelance' | 'bonus';
@@ -22,13 +22,17 @@ interface IncomeSectionProps {
   setMonthlyIncome: (income: number) => void;
   incomes: Income[];
   setIncomes: React.Dispatch<React.SetStateAction<Income[]>>;
+  onAddIncome: (income: Omit<Income, 'id'>) => void;
+  onDeleteIncome: (incomeId: string) => void;
 }
 
 const IncomeSection: React.FC<IncomeSectionProps> = ({ 
   monthlyIncome, 
   setMonthlyIncome, 
   incomes, 
-  setIncomes 
+  setIncomes,
+  onAddIncome,
+  onDeleteIncome
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingSalary, setEditingSalary] = useState(false);
@@ -80,31 +84,20 @@ const IncomeSection: React.FC<IncomeSectionProps> = ({
       return;
     }
 
-    const income: Income = {
-      id: Date.now(),
+    onAddIncome({
       description: newIncome.description,
       amount: parseFloat(newIncome.amount),
       type: newIncome.type,
       date: new Date().toISOString().split('T')[0],
       isRecurring: newIncome.isRecurring
-    };
+    });
 
-    setIncomes([...incomes, income]);
     setNewIncome({ description: '', amount: '', type: 'extra', isRecurring: false });
     setShowForm(false);
-
-    toast({
-      title: "Renda adicionada!",
-      description: `${income.description} - R$ ${income.amount.toFixed(2)}`,
-    });
   };
 
-  const handleDeleteIncome = (id: number) => {
-    setIncomes(incomes.filter(income => income.id !== id));
-    toast({
-      title: "Renda removida",
-      description: "Renda deletada com sucesso.",
-    });
+  const handleDeleteIncome = (id: string) => {
+    onDeleteIncome(id);
   };
 
   const totalExtraIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
