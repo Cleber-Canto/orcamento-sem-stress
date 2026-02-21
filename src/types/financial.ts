@@ -48,6 +48,9 @@ export interface Expense {
   // Campo opcional para observações
   notes?: string;
 
+  // Foto do comprovante (base64)
+  receiptImage?: string;
+
   // Extra: se quiser guardar todas as parcelas associadas
   installments?: Expense[];
 

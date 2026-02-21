@@ -15,6 +15,7 @@ export const useExpenseFormState = () => {
   const [creditCardCutoff, setCreditCardCutoff] = useState('10');
   const [creditCardDueDay, setCreditCardDueDay] = useState('25');
   const [showCreditCardConfig, setShowCreditCardConfig] = useState(false);
+  const [receiptImage, setReceiptImage] = useState('');
 
   const resetForm = () => {
     setDescription('');
@@ -28,6 +29,7 @@ export const useExpenseFormState = () => {
     setRecurringFrequency('');
     setNotes('');
     setShowCreditCardConfig(false);
+    setReceiptImage('');
   };
 
   return {
@@ -44,6 +46,7 @@ export const useExpenseFormState = () => {
     creditCardCutoff, setCreditCardCutoff,
     creditCardDueDay, setCreditCardDueDay,
     showCreditCardConfig, setShowCreditCardConfig,
+    receiptImage, setReceiptImage,
     resetForm
   };
 };

@@ -10,6 +10,7 @@ import CreditCardConfig from './expense-form/CreditCardConfig';
 import InstallmentConfig from './expense-form/InstallmentConfig';
 import RecurringConfig from './expense-form/RecurringConfig';
 import NotesField from './expense-form/NotesField';
+import ReceiptAttachment from './expense-form/ReceiptAttachment';
 import SubmitButton from './expense-form/SubmitButton';
 import { useExpenseFormState } from './expense-form/FormState';
 import { validateForm } from './expense-form/FormValidation';
@@ -35,6 +36,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
     creditCardCutoff, setCreditCardCutoff,
     creditCardDueDay, setCreditCardDueDay,
     showCreditCardConfig, setShowCreditCardConfig,
+    receiptImage, setReceiptImage,
     resetForm
   } = useExpenseFormState();
   
@@ -83,6 +85,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
       isRecurring,
       recurringFrequency: isRecurring ? recurringFrequency : '',
       notes,
+      receiptImage: receiptImage || undefined,
       creditCardCutoff: paymentMethod === 'Cartão de Crédito' ? parseInt(creditCardCutoff) : undefined,
       creditCardDueDay: paymentMethod === 'Cartão de Crédito' ? parseInt(creditCardDueDay) : undefined,
     };
@@ -215,6 +218,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAddExpense }) => {
           />
 
           <NotesField notes={notes} setNotes={setNotes} />
+
+          <ReceiptAttachment receiptImage={receiptImage} setReceiptImage={setReceiptImage} />
 
           <SubmitButton isInstallment={isInstallment} installments={installments} />
         </form>

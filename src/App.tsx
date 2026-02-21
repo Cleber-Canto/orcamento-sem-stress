@@ -6,9 +6,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthGuard from "./components/AuthGuard";
 import Index from "./pages/Index";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const ProtectedIndex = () => (
+  <AuthGuard>
+    <Index />
+  </AuthGuard>
+);
+
+const ProtectedNotFound = () => (
+  <AuthGuard>
+    <NotFound />
+  </AuthGuard>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -16,12 +29,11 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthGuard>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthGuard>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/" element={<ProtectedIndex />} />
+          <Route path="*" element={<ProtectedNotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
