@@ -20,6 +20,8 @@ const FinancialDashboard = () => {
     remainingBalance,
     addExpense,
     deleteExpense,
+    addIncome,
+    deleteIncome,
     setGoals,
     setMonthlyIncome,
     setIncomes
@@ -56,6 +58,8 @@ const FinancialDashboard = () => {
               remainingBalance={remainingBalance}
               onAddExpense={addExpense}
               onDeleteExpense={deleteExpense}
+              onAddIncome={addIncome}
+              onDeleteIncome={deleteIncome}
               onSetGoals={setGoals}
               onSetMonthlyIncome={setMonthlyIncome}
               onSetIncomes={setIncomes}

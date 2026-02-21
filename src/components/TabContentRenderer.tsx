@@ -10,6 +10,7 @@ import CreditCardBilling from './CreditCardBilling';
 import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
 import ExpenseChart from './ExpenseChart';
+import ReportSection from './ReportSection';
 import { Goal, Income, Expense } from '@/types/financial';
 
 interface TabContentRendererProps {
@@ -24,6 +25,8 @@ interface TabContentRendererProps {
   remainingBalance: number;
   onAddExpense: (expense: any) => void;
   onDeleteExpense: (expenseId: string) => void;
+  onAddIncome: (income: Omit<Income, 'id'>) => void;
+  onDeleteIncome: (incomeId: string) => void;
   onSetGoals: (goals: Goal[]) => void;
   onSetMonthlyIncome: (income: number) => void;
   onSetIncomes: (incomes: Income[]) => void;
@@ -41,6 +44,8 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
   remainingBalance,
   onAddExpense,
   onDeleteExpense,
+  onAddIncome,
+  onDeleteIncome,
   onSetGoals,
   onSetMonthlyIncome,
   onSetIncomes
@@ -56,8 +61,10 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
       return <AlertsSection expenses={expenses as any} goals={goals as any} monthlyIncome={monthlyIncome} />;
     case 'education':
       return <EducationSection />;
+    case 'report':
+      return <ReportSection expenses={expenses} incomes={incomes} goals={goals} monthlyIncome={monthlyIncome} totalIncome={totalIncome} totalExpenses={totalExpenses} remainingBalance={remainingBalance} />;
     case 'income':
-      return <IncomeSection monthlyIncome={monthlyIncome} setMonthlyIncome={onSetMonthlyIncome} incomes={incomes as any} setIncomes={onSetIncomes as any} />;
+      return <IncomeSection monthlyIncome={monthlyIncome} setMonthlyIncome={onSetMonthlyIncome} incomes={incomes as any} setIncomes={onSetIncomes as any} onAddIncome={onAddIncome} onDeleteIncome={onDeleteIncome} />;
     case 'installments':
       return <InstallmentsSection expenses={expenses} onDeleteExpense={onDeleteExpense as any} />;
     case 'budget':

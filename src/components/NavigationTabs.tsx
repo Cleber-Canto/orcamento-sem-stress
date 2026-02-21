@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, Wallet, CreditCard } from 'lucide-react';
+import { PlusCircle, TrendingUp, AlertTriangle, Target, BookOpen, Wallet, CreditCard, FileText } from 'lucide-react';
 
 interface NavigationTabsProps {
   activeTab: string;
@@ -18,6 +18,7 @@ const NavigationTabs: React.FC<NavigationTabsProps> = ({ activeTab, onTabChange 
     { id: 'charts', label: 'Gráficos', icon: TrendingUp },
     { id: 'goals', label: 'Metas', icon: Target },
     { id: 'alerts', label: 'Alertas', icon: AlertTriangle },
+    { id: 'report', label: 'Relatório', icon: FileText },
     { id: 'education', label: 'Educação', icon: BookOpen },
   ];
 

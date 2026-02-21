@@ -102,6 +102,51 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
     }
   };
 
+  const addIncome = async (incomeData: Omit<Income, 'id'>) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('incomes' as any)
+        .insert({
+          user_id: userId,
+          description: incomeData.description,
+          amount: incomeData.amount,
+          type: incomeData.type,
+          date: incomeData.date,
+          is_recurring: incomeData.isRecurring
+        } as any);
+
+      if (error) throw error;
+
+      toast.success('Renda adicionada com sucesso!');
+      await fetchAllData();
+    } catch (error: any) {
+      toast.error('Erro ao adicionar renda');
+      console.error('Error adding income:', error);
+    }
+  };
+
+  const deleteIncome = async (incomeId: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('incomes' as any)
+        .delete()
+        .eq('id', incomeId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast.success('Renda excluída com sucesso!');
+      await fetchAllData();
+    } catch (error: any) {
+      toast.error('Erro ao excluir renda');
+      console.error('Error deleting income:', error);
+    }
+  };
+
   const addExpense = async (expenseData: Omit<Expense, 'id'>) => {
     if (!userId) return;
 
@@ -179,6 +224,8 @@ export const useSupabaseFinancialData = (userId: string | undefined) => {
     isLoading,
     addExpense,
     deleteExpense,
+    addIncome,
+    deleteIncome,
     setGoals,
     setMonthlyIncome,
     setIncomes,
