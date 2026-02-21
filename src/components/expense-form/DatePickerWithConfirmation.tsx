@@ -127,7 +127,7 @@ const DatePickerWithConfirmation: React.FC<DatePickerWithConfirmationProps> = ({
               mode="single"
               selected={selectedDate}
               onSelect={handleDateSelect}
-              initialFocus
+              autoFocus
               className={cn("p-3 pointer-events-auto")}
               disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
             />
