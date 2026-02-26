@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Trash2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 
 interface BudgetCategory {
-  id: number;
+  id: string | number;
   category: string;
   budgetAmount: number;
   spentAmount: number;
@@ -16,7 +16,7 @@ interface BudgetCategory {
 
 interface BudgetCategoriesProps {
   budgetCategories: BudgetCategory[];
-  onDeleteCategory: (id: number) => void;
+  onDeleteCategory: (id: string | number) => void;
 }
 
 const BudgetCategories: React.FC<BudgetCategoriesProps> = ({ 

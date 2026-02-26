@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,13 +6,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
-import { Target, TrendingUp, AlertTriangle, Plus, Edit, Trash2, DollarSign } from 'lucide-react';
+import { AlertTriangle, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import BudgetAnalysis from './BudgetAnalysis';
 import BudgetCategories from './BudgetCategories';
 
 interface BudgetCategory {
-  id: number;
+  id: string;
   category: string;
   budgetAmount: number;
   spentAmount: number;
@@ -35,11 +36,10 @@ interface BudgetSectionProps {
 
 const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(() => {
-    const saved = localStorage.getItem('budget-categories');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const today = new Date();
@@ -57,12 +57,40 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
     priority: 'important'
   });
 
-  // Salvar no localStorage
-  useEffect(() => {
-    localStorage.setItem('budget-categories', JSON.stringify(budgetCategories));
-  }, [budgetCategories]);
+  const fetchBudgetCategories = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('budget_categories' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('month', selectedMonth);
 
-  // Calcular gastos por categoria no mês selecionado
+      if (error) throw error;
+
+      const converted: BudgetCategory[] = (data as any[])?.map((b: any) => ({
+        id: b.id,
+        category: b.category,
+        budgetAmount: parseFloat(b.budget_amount?.toString() || '0'),
+        spentAmount: 0,
+        month: b.month,
+        priority: b.priority as 'essential' | 'important' | 'optional'
+      })) || [];
+
+      setBudgetCategories(converted);
+    } catch (error) {
+      console.error('Error fetching budget categories:', error);
+      toast({ title: "Erro", description: "Falha ao carregar orçamento", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id, selectedMonth, toast]);
+
+  useEffect(() => {
+    fetchBudgetCategories();
+  }, [fetchBudgetCategories]);
+
   const calculateSpentByCategory = (category: string) => {
     const [year, month] = selectedMonth.split('-');
     return expenses
@@ -75,59 +103,67 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
       .reduce((sum, expense) => sum + expense.amount, 0);
   };
 
-  // Atualizar valores gastos automaticamente
   const currentBudget = budgetCategories.map(budget => ({
     ...budget,
     spentAmount: calculateSpentByCategory(budget.category)
   }));
 
-  const addBudgetCategory = () => {
-    if (!newCategory.category || newCategory.budgetAmount <= 0) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos corretamente",
-        variant: "destructive"
-      });
+  const addBudgetCategory = async () => {
+    if (!user?.id || !newCategory.category || newCategory.budgetAmount <= 0) {
+      toast({ title: "Erro", description: "Preencha todos os campos corretamente", variant: "destructive" });
       return;
     }
 
-    const newBudget: BudgetCategory = {
-      id: Date.now(),
-      category: newCategory.category,
-      budgetAmount: newCategory.budgetAmount,
-      spentAmount: calculateSpentByCategory(newCategory.category),
-      month: selectedMonth,
-      priority: newCategory.priority
-    };
+    try {
+      const { error } = await supabase
+        .from('budget_categories' as any)
+        .insert({
+          user_id: user.id,
+          category: newCategory.category,
+          budget_amount: newCategory.budgetAmount,
+          month: selectedMonth,
+          priority: newCategory.priority
+        } as any);
 
-    setBudgetCategories([...budgetCategories, newBudget]);
-    setNewCategory({ category: '', budgetAmount: 0, priority: 'important' });
-    setIsAddingCategory(false);
+      if (error) throw error;
 
-    toast({
-      title: "Orçamento adicionado",
-      description: `Meta para ${newCategory.category}: R$ ${newCategory.budgetAmount.toFixed(2)}`
-    });
+      toast({ title: "Orçamento adicionado", description: `Meta para ${newCategory.category}: R$ ${newCategory.budgetAmount.toFixed(2)}` });
+      setNewCategory({ category: '', budgetAmount: 0, priority: 'important' });
+      setIsAddingCategory(false);
+      await fetchBudgetCategories();
+    } catch (error: any) {
+      if (error.code === '23505') {
+        toast({ title: "Erro", description: "Categoria já existe neste mês", variant: "destructive" });
+      } else {
+        toast({ title: "Erro", description: "Falha ao adicionar orçamento", variant: "destructive" });
+      }
+    }
   };
 
-  const deleteBudgetCategory = (id: number) => {
-    setBudgetCategories(budgetCategories.filter(budget => budget.id !== id));
-    toast({
-      title: "Orçamento removido",
-      description: "Categoria removida do orçamento"
-    });
+  const deleteBudgetCategory = async (id: string | number) => {
+    try {
+      const { error } = await supabase
+        .from('budget_categories' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({ title: "Orçamento removido", description: "Categoria removida do orçamento" });
+      await fetchBudgetCategories();
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao remover orçamento", variant: "destructive" });
+    }
   };
 
-  // Estatísticas gerais
-  const totalBudget = currentBudget.reduce((sum, budget) => sum + budget.budgetAmount, 0);
-  const totalSpent = currentBudget.reduce((sum, budget) => sum + budget.spentAmount, 0);
+  const totalBudget = currentBudget.reduce((sum, b) => sum + b.budgetAmount, 0);
+  const totalSpent = currentBudget.reduce((sum, b) => sum + b.spentAmount, 0);
   const remainingBudget = totalBudget - totalSpent;
   const budgetUsagePercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-  // Categorias com problemas
-  const overdraftCategories = currentBudget.filter(budget => budget.spentAmount > budget.budgetAmount);
-  const nearLimitCategories = currentBudget.filter(budget => 
-    budget.spentAmount > budget.budgetAmount * 0.8 && budget.spentAmount <= budget.budgetAmount
+  const overdraftCategories = currentBudget.filter(b => b.spentAmount > b.budgetAmount);
+  const nearLimitCategories = currentBudget.filter(b => 
+    b.spentAmount > b.budgetAmount * 0.8 && b.spentAmount <= b.budgetAmount
   );
 
   const availableCategories = [
@@ -137,9 +173,9 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-bold">Orçamento Mensal</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div>
             <Label htmlFor="month-select">Mês</Label>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -178,7 +214,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="category">Categoria</Label>
+                  <Label>Categoria</Label>
                   <Select value={newCategory.category} onValueChange={(value) => setNewCategory({...newCategory, category: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma categoria" />
@@ -192,9 +228,8 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
                 </div>
                 
                 <div>
-                  <Label htmlFor="budget-amount">Valor do Orçamento (R$)</Label>
+                  <Label>Valor do Orçamento (R$)</Label>
                   <Input
-                    id="budget-amount"
                     type="number"
                     step="0.01"
                     value={newCategory.budgetAmount}
@@ -204,7 +239,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
                 </div>
 
                 <div>
-                  <Label htmlFor="priority">Prioridade</Label>
+                  <Label>Prioridade</Label>
                   <Select value={newCategory.priority} onValueChange={(value: 'essential' | 'important' | 'optional') => setNewCategory({...newCategory, priority: value})}>
                     <SelectTrigger>
                       <SelectValue />
@@ -218,12 +253,8 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddingCategory(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={addBudgetCategory}>
-                    Adicionar
-                  </Button>
+                  <Button variant="outline" onClick={() => setIsAddingCategory(false)}>Cancelar</Button>
+                  <Button onClick={addBudgetCategory}>Adicionar</Button>
                 </div>
               </div>
             </DialogContent>
@@ -240,7 +271,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
           <CardContent>
             <div className="text-2xl font-bold text-blue-800">R$ {totalBudget.toFixed(2)}</div>
             <div className="text-xs text-blue-600 mt-1">
-              {totalBudget > 0 ? ((totalBudget / monthlyIncome) * 100).toFixed(1) : '0'}% da renda
+              {totalBudget > 0 && monthlyIncome > 0 ? ((totalBudget / monthlyIncome) * 100).toFixed(1) : '0'}% da renda
             </div>
           </CardContent>
         </Card>
@@ -251,9 +282,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-800">R$ {totalSpent.toFixed(2)}</div>
-            <div className="text-xs text-red-600 mt-1">
-              {budgetUsagePercentage.toFixed(1)}% do orçamento
-            </div>
+            <div className="text-xs text-red-600 mt-1">{budgetUsagePercentage.toFixed(1)}% do orçamento</div>
           </CardContent>
         </Card>
 
@@ -311,7 +340,6 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
                 </div>
               </div>
             )}
-            
             {nearLimitCategories.length > 0 && (
               <div>
                 <h4 className="font-medium text-orange-700 mb-2">⚠️ Próximo do Limite:</h4>

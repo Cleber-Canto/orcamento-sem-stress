@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, TrendingDown, Target, AlertCircle } from 'lucide-react';
 
 interface BudgetCategory {
-  id: number;
+  id: string | number;
   category: string;
   budgetAmount: number;
   spentAmount: number;

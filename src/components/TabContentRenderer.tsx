@@ -11,6 +11,7 @@ import AlertsSection from './AlertsSection';
 import EducationSection from './EducationSection';
 import ExpenseChart from './ExpenseChart';
 import ReportSection from './ReportSection';
+import EvolutionSection from './EvolutionSection';
 import { Goal, Income, Expense } from '@/types/financial';
 
 interface TabContentRendererProps {
@@ -69,6 +70,8 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
       return <InstallmentsSection expenses={expenses} onDeleteExpense={onDeleteExpense as any} />;
     case 'budget':
       return <BudgetSection expenses={expenses as any} monthlyIncome={monthlyIncome} />;
+    case 'evolution':
+      return <EvolutionSection expenses={expenses} incomes={incomes} />;
     case 'credit-card':
       return <CreditCardBilling expenses={expenses as any} />;
     default:
