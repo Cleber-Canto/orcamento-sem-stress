@@ -7,6 +7,8 @@ import { useSupabaseFinancialData } from '@/hooks/useSupabaseFinancialData';
 
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   
   const { user, logout } = useAuth();
   const { 
@@ -39,9 +41,12 @@ const FinancialDashboard = () => {
         />
         
         <div className="mt-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Bem-vindo, {user?.name || 'Usuário'}!
           </h1>
+          <p className="text-muted-foreground mb-6">
+            📅 Competência: {now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          </p>
           
           <NavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
           

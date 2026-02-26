@@ -147,15 +147,22 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({ expenses, monthlyIncome }
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = new Date(2025, i);
-                  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                  return (
-                    <SelectItem key={value} value={value}>
-                      {date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                    </SelectItem>
-                  );
-                })}
+                {(() => {
+                  const currentYear = new Date().getFullYear();
+                  const months: JSX.Element[] = [];
+                  for (let year = currentYear - 1; year <= currentYear + 1; year++) {
+                    for (let month = 0; month < 12; month++) {
+                      const date = new Date(year, month);
+                      const value = `${year}-${String(month + 1).padStart(2, '0')}`;
+                      months.push(
+                        <SelectItem key={value} value={value}>
+                          {date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                        </SelectItem>
+                      );
+                    }
+                  }
+                  return months;
+                })()}
               </SelectContent>
             </Select>
           </div>
